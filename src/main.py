@@ -1,5 +1,10 @@
 from gui import start_app
 
 
-if __name__ == "__main__":
+def main():
+    """Start the File Organizer application."""
     start_app()
+
+
+if __name__ == "__main__":
+    main()

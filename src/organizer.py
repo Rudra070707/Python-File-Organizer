@@ -31,37 +31,76 @@ FILE_CATEGORIES = {
 }
 
 
+# Precomputed extension lookup table.
+# This avoids scanning every category for every file.
+EXTENSION_TO_CATEGORY = {
+    extension: category
+    for category, extensions in FILE_CATEGORIES.items()
+    for extension in extensions
+}
+
+
 def get_category(file_path):
+    """
+    Return the category for a file based on its extension.
+
+    Unknown extensions are classified as "Others".
+    Extension matching is case-insensitive.
+    """
+    file_path = Path(file_path)
     extension = file_path.suffix.lower()
 
-    for category, extensions in FILE_CATEGORIES.items():
-        if extension in extensions:
-            return category
-
-    return "Others"
+    return EXTENSION_TO_CATEGORY.get(
+        extension,
+        "Others"
+    )
 
 
 def get_files(folder):
+    """
+    Return all files directly inside the selected folder.
+
+    Subdirectories are intentionally ignored.
+    """
     folder = Path(folder)
 
     if not folder.exists():
-        raise FileNotFoundError("The selected folder does not exist.")
+        raise FileNotFoundError(
+            "The selected folder does not exist."
+        )
 
     if not folder.is_dir():
-        raise NotADirectoryError("The selected path is not a folder.")
+        raise NotADirectoryError(
+            "The selected path is not a folder."
+        )
 
     return [
-        item for item in folder.iterdir()
+        item
+        for item in folder.iterdir()
         if item.is_file()
     ]
 
 
 def get_unique_path(folder, filename):
+    """
+    Return a unique path inside folder.
+
+    Example:
+        photo.jpg
+        photo_1.jpg
+        photo_2.jpg
+    """
+    folder = Path(folder)
     original = Path(filename)
+
     counter = 1
 
     while True:
-        new_name = f"{original.stem}_{counter}{original.suffix}"
+        new_name = (
+            f"{original.stem}_{counter}"
+            f"{original.suffix}"
+        )
+
         candidate = folder / new_name
 
         if not candidate.exists():
@@ -71,42 +110,65 @@ def get_unique_path(folder, filename):
 
 
 def organize_folder(folder):
+    """
+    Organize files in a folder into category subdirectories.
+
+    Returns a list describing every successful move.
+
+    If a move fails after previous files have already been moved,
+    the function attempts to restore those previous files before
+    re-raising the original filesystem error.
+    """
     folder = Path(folder)
     files = get_files(folder)
 
     moved_files = []
 
-    for file_path in files:
-        category = get_category(file_path)
-        destination = folder / category
+    try:
+        for file_path in files:
+            category = get_category(file_path)
+            destination = folder / category
 
-        destination.mkdir(exist_ok=True)
-
-        target = destination / file_path.name
-
-        if target.exists():
-            target = get_unique_path(
-                destination,
-                file_path.name
+            destination.mkdir(
+                exist_ok=True
             )
 
-        shutil.move(str(file_path), str(target))
+            target = destination / file_path.name
 
-        moved_files.append({
-            "source": file_path,
-            "destination": target,
-            "category": category
-        })
+            if target.exists():
+                target = get_unique_path(
+                    destination,
+                    file_path.name
+                )
+
+            shutil.move(
+                str(file_path),
+                str(target)
+            )
+
+            moved_files.append({
+                "source": file_path,
+                "destination": target,
+                "category": category
+            })
+
+    except OSError:
+        _rollback_moves(moved_files)
+        raise
 
     return moved_files
 
 
-def undo_organization(moved_files):
-    if not moved_files:
-        return []
+def _rollback_moves(moved_files):
+    """
+    Best-effort rollback for an incomplete organization.
 
-    restored_files = []
+    Only moves a file back when:
+    - the destination still exists
+    - the original source does not exist
 
+    Existing files at the original location are never overwritten.
+    """
     for item in reversed(moved_files):
         source = Path(item["source"])
         destination = Path(item["destination"])
@@ -117,7 +179,52 @@ def undo_organization(moved_files):
         if source.exists():
             continue
 
-        source.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            source.parent.mkdir(
+                parents=True,
+                exist_ok=True
+            )
+
+            shutil.move(
+                str(destination),
+                str(source)
+            )
+
+        except OSError:
+            # Do not hide the original organization error.
+            # The caller will receive the original exception.
+            continue
+
+
+def undo_organization(moved_files):
+    """
+    Restore files from the most recent organization operation.
+
+    Files are processed in reverse order.
+
+    Existing files at the original location are never overwritten.
+    """
+    if not moved_files:
+        return []
+
+    restored_files = []
+
+    for item in reversed(moved_files):
+        source = Path(item["source"])
+        destination = Path(item["destination"])
+
+        # The organized file no longer exists.
+        if not destination.exists():
+            continue
+
+        # Never overwrite an existing file.
+        if source.exists():
+            continue
+
+        source.parent.mkdir(
+            parents=True,
+            exist_ok=True
+        )
 
         shutil.move(
             str(destination),
