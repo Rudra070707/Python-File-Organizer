@@ -51,7 +51,8 @@ class FileOrganizerApp:
 
         self.folder_entry = tk.Entry(
             path_frame,
-            font=("Segoe UI", 10)
+            font=("Segoe UI", 10),
+            state="readonly"
         )
         self.folder_entry.pack(
             side="left",
@@ -60,13 +61,13 @@ class FileOrganizerApp:
             ipady=6
         )
 
-        browse_button = tk.Button(
+        self.browse_button = tk.Button(
             path_frame,
             text="Browse",
             command=self.select_folder,
             width=10
         )
-        browse_button.pack(
+        self.browse_button.pack(
             side="left",
             padx=(10, 0)
         )
@@ -79,7 +80,8 @@ class FileOrganizerApp:
             text="Preview",
             command=self.preview_files,
             width=12,
-            height=2
+            height=2,
+            state=tk.DISABLED
         )
         self.preview_button.pack(
             side="left",
@@ -91,7 +93,8 @@ class FileOrganizerApp:
             text="Organize Files",
             command=self.organize_files,
             width=12,
-            height=2
+            height=2,
+            state=tk.DISABLED
         )
         self.organize_button.pack(
             side="left",
@@ -152,7 +155,8 @@ class FileOrganizerApp:
             result_frame,
             height=12,
             font=("Consolas", 10),
-            yscrollcommand=scrollbar.set
+            yscrollcommand=scrollbar.set,
+            wrap="none"
         )
         self.result_text.pack(
             side="left",
@@ -163,6 +167,22 @@ class FileOrganizerApp:
         scrollbar.config(
             command=self.result_text.yview
         )
+
+        self.show_message(
+            "Select a folder to begin."
+        )
+
+    def show_message(self, message):
+        self.result_text.config(state=tk.NORMAL)
+        self.result_text.delete("1.0", tk.END)
+        self.result_text.insert(tk.END, message)
+        self.result_text.config(state=tk.DISABLED)
+
+    def show_result(self, message):
+        self.result_text.config(state=tk.NORMAL)
+        self.result_text.delete("1.0", tk.END)
+        self.result_text.insert(tk.END, message)
+        self.result_text.config(state=tk.DISABLED)
 
     def select_folder(self):
         folder = filedialog.askdirectory(
@@ -175,27 +195,24 @@ class FileOrganizerApp:
         self.selected_folder = folder
         self.last_operation = None
 
-        self.folder_entry.delete(
-            0,
-            tk.END
+        self.folder_entry.config(state=tk.NORMAL)
+        self.folder_entry.delete(0, tk.END)
+        self.folder_entry.insert(0, folder)
+        self.folder_entry.config(state="readonly")
+
+        self.preview_button.config(
+            state=tk.NORMAL
         )
 
-        self.folder_entry.insert(
-            0,
-            folder
+        self.organize_button.config(
+            state=tk.NORMAL
         )
 
         self.undo_button.config(
             state=tk.DISABLED
         )
 
-        self.result_text.delete(
-            "1.0",
-            tk.END
-        )
-
-        self.result_text.insert(
-            tk.END,
+        self.show_message(
             "Folder selected successfully.\n\n"
             "Click Preview to see how the files "
             "will be organized."
@@ -214,31 +231,29 @@ class FileOrganizerApp:
                 self.selected_folder
             )
 
-            self.result_text.delete(
-                "1.0",
-                tk.END
-            )
-
             if not files:
-                self.result_text.insert(
-                    tk.END,
+                self.show_message(
                     "No files found in the selected folder."
                 )
                 return
 
-            self.result_text.insert(
-                tk.END,
-                f"Found {len(files)} file(s):\n\n"
-            )
+            lines = [
+                f"Found {len(files)} file(s):",
+                ""
+            ]
 
             for file_path in files:
                 category = get_category(file_path)
 
-                self.result_text.insert(
-                    tk.END,
-                    f"{file_path.name}\n"
-                    f"    → {category}\n\n"
-                )
+                lines.extend([
+                    file_path.name,
+                    f"    → {category}",
+                    ""
+                ])
+
+            self.show_result(
+                "\n".join(lines)
+            )
 
         except (
             FileNotFoundError,
@@ -277,11 +292,6 @@ class FileOrganizerApp:
                 self.selected_folder
             )
 
-            self.result_text.delete(
-                "1.0",
-                tk.END
-            )
-
             if not moved_files:
                 self.last_operation = None
 
@@ -289,8 +299,7 @@ class FileOrganizerApp:
                     state=tk.DISABLED
                 )
 
-                self.result_text.insert(
-                    tk.END,
+                self.show_message(
                     "No files were found to organize."
                 )
                 return
@@ -301,18 +310,21 @@ class FileOrganizerApp:
                 state=tk.NORMAL
             )
 
-            self.result_text.insert(
-                tk.END,
+            lines = [
                 f"Successfully organized "
-                f"{len(moved_files)} file(s).\n\n"
-            )
+                f"{len(moved_files)} file(s).",
+                ""
+            ]
 
             for item in moved_files:
-                self.result_text.insert(
-                    tk.END,
+                lines.append(
                     f"{item['source'].name}"
-                    f" → {item['category']}\n"
+                    f" → {item['category']}"
                 )
+
+            self.show_result(
+                "\n".join(lines)
+            )
 
             messagebox.showinfo(
                 "Completed",
@@ -363,30 +375,27 @@ class FileOrganizerApp:
                 state=tk.DISABLED
             )
 
-            self.result_text.delete(
-                "1.0",
-                tk.END
-            )
-
             if not restored_files:
-                self.result_text.insert(
-                    tk.END,
+                self.show_message(
                     "No files could be restored."
                 )
                 return
 
-            self.result_text.insert(
-                tk.END,
+            lines = [
                 f"Successfully restored "
-                f"{len(restored_files)} file(s).\n\n"
-            )
+                f"{len(restored_files)} file(s).",
+                ""
+            ]
 
             for item in restored_files:
-                self.result_text.insert(
-                    tk.END,
+                lines.append(
                     f"{item['source'].name}"
-                    f" → original location\n"
+                    f" → original location"
                 )
+
+            self.show_result(
+                "\n".join(lines)
+            )
 
             messagebox.showinfo(
                 "Undo Completed",
@@ -404,18 +413,24 @@ class FileOrganizerApp:
         self.selected_folder = None
         self.last_operation = None
 
-        self.folder_entry.delete(
-            0,
-            tk.END
+        self.folder_entry.config(state=tk.NORMAL)
+        self.folder_entry.delete(0, tk.END)
+        self.folder_entry.config(state="readonly")
+
+        self.preview_button.config(
+            state=tk.DISABLED
         )
 
-        self.result_text.delete(
-            "1.0",
-            tk.END
+        self.organize_button.config(
+            state=tk.DISABLED
         )
 
         self.undo_button.config(
             state=tk.DISABLED
+        )
+
+        self.show_message(
+            "Select a folder to begin."
         )
 
 
