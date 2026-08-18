@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
+from collections import Counter
 
 from organizer import (
     get_category,
@@ -184,6 +185,53 @@ class FileOrganizerApp:
         self.result_text.insert(tk.END, message)
         self.result_text.config(state=tk.DISABLED)
 
+    def create_organization_summary(self, moved_files):
+        category_counts = Counter(
+            item["category"]
+            for item in moved_files
+        )
+
+        category_order = [
+            "Images",
+            "Documents",
+            "Videos",
+            "Music",
+            "Archives",
+            "Programs",
+            "Others",
+        ]
+
+        lines = [
+            "Organization Complete",
+            "",
+            f"{len(moved_files)} files organized",
+            "",
+            "Category Summary",
+            "----------------",
+        ]
+
+        for category in category_order:
+            count = category_counts.get(category, 0)
+
+            if count > 0:
+                lines.append(
+                    f"{category:<12} {count}"
+                )
+
+        lines.extend([
+            "",
+            "Files Organized",
+            "---------------",
+        ])
+
+        for item in moved_files:
+            lines.append(
+                f"{item['source'].name}"
+                f" → {item['category']}"
+            )
+
+        return "\n".join(lines)
+
     def select_folder(self):
         folder = filedialog.askdirectory(
             title="Select folder to organize"
@@ -310,20 +358,10 @@ class FileOrganizerApp:
                 state=tk.NORMAL
             )
 
-            lines = [
-                f"Successfully organized "
-                f"{len(moved_files)} file(s).",
-                ""
-            ]
-
-            for item in moved_files:
-                lines.append(
-                    f"{item['source'].name}"
-                    f" → {item['category']}"
-                )
-
             self.show_result(
-                "\n".join(lines)
+                self.create_organization_summary(
+                    moved_files
+                )
             )
 
             messagebox.showinfo(
