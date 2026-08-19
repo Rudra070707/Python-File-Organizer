@@ -1,8 +1,27 @@
+# Python cache
 __pycache__/
 *.py[cod]
+*$py.class
+
+# Virtual environments
 .venv/
 venv/
-.env
+env/
+
+# Testing / coverage
 .pytest_cache/
-.idea/
+.coverage
+htmlcov/
+
+# IDE
 .vscode/
+.idea/
+
+# PyInstaller
+build/
+dist/
+*.spec
+
+# OS
+.DS_Store
+Thumbs.db
