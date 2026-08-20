@@ -1,10 +1,10 @@
 # Python File Organizer
 
-A lightweight desktop application built with Python and Tkinter that automatically organizes files into categorized folders based on their file extensions.
+A lightweight desktop application built with **Python and Tkinter** that automatically organizes files into categorized folders based on their file extensions.
 
 The application provides a clean graphical interface for selecting a folder, previewing its contents, organizing files safely, and undoing the most recent organization operation.
 
-It is designed to be simple, offline, dependency-free at runtime, and safe against accidental file overwrites.
+It is designed to be **simple, offline, dependency-free at runtime, and safe against accidental file overwrites**.
 
 > **Latest stable release: v1.0.0**
 
@@ -32,6 +32,26 @@ It is designed to be simple, offline, dependency-free at runtime, and safe again
 
 ---
 
+## 🖼️ Screenshots
+
+### Main Window
+
+![Python File Organizer - Main Window](assets/screenshots/main-window.png)
+
+### File Preview
+
+![Python File Organizer - Preview](assets/screenshots/preview.png)
+
+### Organized Files
+
+![Python File Organizer - Organized Files](assets/screenshots/organized-files.png)
+
+### Undo Operation
+
+![Python File Organizer - Undo](assets/screenshots/undo.png)
+
+---
+
 ## 📥 Download
 
 ### Windows
@@ -40,9 +60,9 @@ The latest stable Windows release is:
 
 **File Organizer v1.0.0**
 
-Download the release from the project's GitHub Releases page:
+Download the Windows ZIP from the project's **GitHub Releases** page:
 
-**GitHub → Releases → v1.0.0 → `FileOrganizer-v1.0.0-Windows.zip`**
+**`FileOrganizer-v1.0.0-Windows.zip`**
 
 ### Installation
 
@@ -264,7 +284,7 @@ The File Organizer window will open.
 
 ## 🪟 Windows Standalone EXE
 
-A standalone Windows executable is generated using PyInstaller.
+A standalone Windows executable is generated using **PyInstaller**.
 
 The release uses PyInstaller's **one-folder distribution** format:
 
@@ -398,20 +418,20 @@ A successful compilation indicates that the Python source files compile without 
 
 ## 🧪 Release Validation
 
-The v1.0.0 release was validated through multiple stages:
+The v1.0.0 release was validated through multiple stages.
 
 ### Source Application
 
-* GUI launched successfully
-* Folder browsing tested
-* File preview tested
-* File organization tested
-* Category handling tested
-* Duplicate filename handling tested
-* Undo tested
-* Clear functionality tested
-* Keyboard shortcuts tested
-* Closing and reopening tested
+* ✅ GUI launched successfully
+* ✅ Folder browsing tested
+* ✅ File preview tested
+* ✅ File organization tested
+* ✅ Category handling tested
+* ✅ Duplicate filename handling tested
+* ✅ Undo tested
+* ✅ Clear functionality tested
+* ✅ Keyboard shortcuts tested
+* ✅ Closing and reopening tested
 
 ### Automated Tests
 
@@ -421,10 +441,10 @@ The v1.0.0 release was validated through multiple stages:
 
 ### Standalone Executable
 
-* PyInstaller build completed successfully
-* Windows executable launched successfully
-* Standalone application tested
-* Clean-release ZIP tested outside the development project
+* ✅ PyInstaller build completed successfully
+* ✅ Windows executable launched successfully
+* ✅ Standalone application tested
+* ✅ Clean-release ZIP tested outside the development project
 
 ### Clean Environment Test
 
@@ -450,6 +470,13 @@ This validates the distributed release rather than only the development environm
 
 ```text
 Python-File-Organizer/
+│
+├── assets/
+│   └── screenshots/
+│       ├── main-window.png
+│       ├── preview.png
+│       ├── organized-files.png
+│       └── undo.png
 │
 ├── src/
 │   ├── main.py
@@ -616,3 +643,5 @@ The current release has been:
 This project is currently intended for **educational and personal use**.
 
 No formal open-source license is currently included with the repository.
+
+If you plan to allow others to freely modify, distribute, or reuse the project, add an appropriate open-source license such as the MIT License.
