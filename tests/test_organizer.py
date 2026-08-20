@@ -67,6 +67,24 @@ class TestGetCategory(unittest.TestCase):
             "Archives"
         )
 
+    def test_file_without_extension(self):
+        self.assertEqual(
+            get_category(Path("README")),
+            "Others"
+        )
+
+    def test_hidden_file(self):
+        self.assertEqual(
+            get_category(Path(".gitignore")),
+            "Others"
+        )
+
+    def test_extension_with_mixed_case(self):
+        self.assertEqual(
+            get_category(Path("PHOTO.JpG")),
+            "Images"
+        )
+
 
 class TestGetFiles(unittest.TestCase):
 
@@ -109,6 +127,20 @@ class TestGetFiles(unittest.TestCase):
 
             with self.assertRaises(NotADirectoryError):
                 get_files(file_path)
+
+    def test_accepts_path_object(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            folder = Path(temp_dir)
+
+            file_path = folder / "photo.jpg"
+            file_path.touch()
+
+            files = get_files(folder)
+
+            self.assertEqual(
+                files,
+                [file_path]
+            )
 
 
 class TestGetUniquePath(unittest.TestCase):
@@ -320,6 +352,7 @@ class TestUndoOrganization(unittest.TestCase):
             folder = Path(temp_dir)
 
             source = folder / "document.pdf"
+
             destination = (
                 folder
                 / "Documents"
