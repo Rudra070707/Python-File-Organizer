@@ -18,10 +18,10 @@ class FileOrganizerApp:
     # WINDOW
     # ================================================================
 
-    WINDOW_WIDTH = 940
-    WINDOW_HEIGHT = 720
-    MIN_WIDTH = 820
-    MIN_HEIGHT = 620
+    WINDOW_WIDTH = 1100
+    WINDOW_HEIGHT = 760
+    MIN_WIDTH = 900
+    MIN_HEIGHT = 650
 
     # ================================================================
     # COLOR SYSTEM
@@ -29,10 +29,12 @@ class FileOrganizerApp:
 
     COLORS = {
         "bg": "#0B1120",
-        "bg_secondary": "#111827",
+        "bg_secondary": "#0F172A",
+
         "panel": "#151F32",
         "panel_light": "#1B263B",
         "panel_hover": "#202D45",
+        "panel_active": "#24324A",
 
         "border": "#26344D",
         "border_light": "#33445F",
@@ -59,16 +61,18 @@ class FileOrganizerApp:
         "black": "#000000",
 
         "input": "#0F172A",
+
         "scrollbar": "#273650",
         "scrollbar_hover": "#385071",
 
         "success_bg": "#0D2B1C",
         "info_bg": "#102344",
         "warning_bg": "#30240D",
+        "error_bg": "#2A1115",
     }
 
     # ================================================================
-    # CATEGORY ORDER
+    # CATEGORIES
     # ================================================================
 
     CATEGORY_ORDER = [
@@ -110,21 +114,14 @@ class FileOrganizerApp:
 
         self.selected_folder = None
         self.last_operation = None
+        self.is_busy = False
 
         self.configure_window()
         self.create_widgets()
         self.bind_shortcuts()
 
         self.update_button_states()
-
-        self.show_message(
-            "Welcome to File Organizer\n\n"
-            "Select a folder to begin organizing your files."
-        )
-
-        self.set_status(
-            "Ready • Select a folder to get started"
-        )
+        self.show_welcome()
 
     # ================================================================
     # WINDOW CONFIGURATION
@@ -132,9 +129,11 @@ class FileOrganizerApp:
 
     def configure_window(self):
         self.root.title("File Organizer")
+
         self.root.geometry(
             f"{self.WINDOW_WIDTH}x{self.WINDOW_HEIGHT}"
         )
+
         self.root.minsize(
             self.MIN_WIDTH,
             self.MIN_HEIGHT
@@ -176,7 +175,10 @@ class FileOrganizerApp:
             pady=(28, 18)
         )
 
-        # Left side
+        # ------------------------------------------------------------
+        # LEFT
+        # ------------------------------------------------------------
+
         title_frame = tk.Frame(
             top,
             bg=self.COLORS["bg"]
@@ -189,7 +191,7 @@ class FileOrganizerApp:
         icon = tk.Label(
             title_frame,
             text="▦",
-            font=("Segoe UI Symbol", 27, "bold"),
+            font=("Segoe UI Symbol", 29, "bold"),
             bg=self.COLORS["bg"],
             fg=self.COLORS["blue"]
         )
@@ -233,7 +235,10 @@ class FileOrganizerApp:
             pady=(2, 0)
         )
 
-        # Right side status
+        # ------------------------------------------------------------
+        # RIGHT STATUS
+        # ------------------------------------------------------------
+
         status_container = tk.Frame(
             top,
             bg=self.COLORS["panel"],
@@ -313,7 +318,10 @@ class FileOrganizerApp:
             pady=18
         )
 
-        # Header row
+        # ------------------------------------------------------------
+        # HEADER
+        # ------------------------------------------------------------
+
         heading_row = tk.Frame(
             content,
             bg=self.COLORS["panel"]
@@ -326,7 +334,7 @@ class FileOrganizerApp:
         folder_icon = tk.Label(
             heading_row,
             text="⌂",
-            font=("Segoe UI Symbol", 15, "bold"),
+            font=("Segoe UI Symbol", 16, "bold"),
             bg=self.COLORS["panel"],
             fg=self.COLORS["blue"]
         )
@@ -360,7 +368,10 @@ class FileOrganizerApp:
             side="right"
         )
 
-        # Path row
+        # ------------------------------------------------------------
+        # PATH
+        # ------------------------------------------------------------
+
         path_frame = tk.Frame(
             content,
             bg=self.COLORS["panel"]
@@ -442,7 +453,6 @@ class FileOrganizerApp:
             pady=(0, 16)
         )
 
-        # Preview
         self.preview_button = self.create_button(
             frame,
             "Preview",
@@ -457,7 +467,6 @@ class FileOrganizerApp:
             padx=(0, 7)
         )
 
-        # Organize
         self.organize_button = self.create_button(
             frame,
             "Organize Files",
@@ -472,7 +481,6 @@ class FileOrganizerApp:
             padx=7
         )
 
-        # Undo
         self.undo_button = self.create_button(
             frame,
             "Undo",
@@ -487,7 +495,6 @@ class FileOrganizerApp:
             padx=7
         )
 
-        # Clear
         self.clear_button = self.create_button(
             frame,
             "Clear",
@@ -502,10 +509,14 @@ class FileOrganizerApp:
             padx=7
         )
 
-        # Shortcut hint
         shortcut = tk.Label(
             frame,
-            text="Ctrl+O  Browse    •    Ctrl+P  Preview    •    Ctrl+Z  Undo    •    Esc  Clear",
+            text=(
+                "Ctrl+O  Browse    •    "
+                "Ctrl+P  Preview    •    "
+                "Ctrl+Z  Undo    •    "
+                "Esc  Clear"
+            ),
             font=("Segoe UI", 8),
             bg=self.COLORS["bg"],
             fg=self.COLORS["text_muted"]
@@ -622,7 +633,6 @@ class FileOrganizerApp:
             side="right"
         )
 
-        # Outer border
         result_outer = tk.Frame(
             self.root,
             bg=self.COLORS["border"]
@@ -695,7 +705,10 @@ class FileOrganizerApp:
             state=tk.DISABLED
         )
 
-        # Text tags
+        # ------------------------------------------------------------
+        # TEXT TAGS
+        # ------------------------------------------------------------
+
         self.result_text.tag_configure(
             "heading",
             foreground=self.COLORS["text"],
@@ -789,23 +802,39 @@ class FileOrganizerApp:
     def bind_shortcuts(self):
         self.root.bind(
             "<Control-o>",
-            lambda event: self.select_folder()
+            self._shortcut_browse
         )
 
         self.root.bind(
             "<Control-p>",
-            lambda event: self.preview_files()
+            self._shortcut_preview
         )
 
         self.root.bind(
             "<Control-z>",
-            lambda event: self.undo_last_operation()
+            self._shortcut_undo
         )
 
         self.root.bind(
             "<Escape>",
-            lambda event: self.clear()
+            self._shortcut_clear
         )
+
+    def _shortcut_browse(self, event):
+        self.select_folder()
+        return "break"
+
+    def _shortcut_preview(self, event):
+        self.preview_files()
+        return "break"
+
+    def _shortcut_undo(self, event):
+        self.undo_last_operation()
+        return "break"
+
+    def _shortcut_clear(self, event):
+        self.clear()
+        return "break"
 
     # ================================================================
     # UI HELPERS
@@ -814,6 +843,32 @@ class FileOrganizerApp:
     def set_status(self, message):
         self.status_label.config(
             text=message
+        )
+
+    def set_busy(self, busy, message=None):
+        self.is_busy = busy
+
+        if message:
+            self.set_status(message)
+
+        self.update_button_states()
+        self.root.update_idletasks()
+
+    def show_welcome(self):
+        self.show_message(
+            "WELCOME TO FILE ORGANIZER\n\n"
+            "Select a folder to begin organizing your files.\n\n"
+            "Workflow\n"
+            "────────────────────────────────────────\n"
+            "1. Select a folder\n"
+            "2. Preview detected files\n"
+            "3. Organize files by category\n"
+            "4. Undo the last organization if needed\n\n"
+            "All processing is performed locally on your computer."
+        )
+
+        self.set_status(
+            "Ready • Select a folder to get started"
         )
 
     def show_message(self, message):
@@ -838,6 +893,8 @@ class FileOrganizerApp:
         self.result_count_label.config(
             text=""
         )
+
+        self.result_text.see("1.0")
 
     def show_result(self, message, count=None):
         self.result_text.config(
@@ -867,6 +924,8 @@ class FileOrganizerApp:
                 text=f"{count} FILE(S)"
             )
 
+        self.result_text.see("1.0")
+
     def set_folder_entry(self, folder):
         self.folder_entry.config(
             state=tk.NORMAL
@@ -886,6 +945,40 @@ class FileOrganizerApp:
             state="readonly"
         )
 
+    def validate_selected_folder(self):
+        if not self.selected_folder:
+            return False
+
+        folder = Path(self.selected_folder)
+
+        if not folder.exists():
+            messagebox.showerror(
+                "Folder Error",
+                "The selected folder no longer exists."
+            )
+            self.selected_folder = None
+            self.last_operation = None
+            self.set_folder_entry("")
+            self.update_button_states()
+            return False
+
+        if not folder.is_dir():
+            messagebox.showerror(
+                "Folder Error",
+                "The selected path is no longer a folder."
+            )
+            self.selected_folder = None
+            self.last_operation = None
+            self.set_folder_entry("")
+            self.update_button_states()
+            return False
+
+        return True
+
+    # ================================================================
+    # BUTTON STATES
+    # ================================================================
+
     def update_button_states(self):
         has_folder = bool(
             self.selected_folder
@@ -895,6 +988,38 @@ class FileOrganizerApp:
             self.last_operation
         )
 
+        if self.is_busy:
+            self.preview_button.config(
+                state=tk.DISABLED,
+                bg=self.COLORS["panel"]
+            )
+
+            self.organize_button.config(
+                state=tk.DISABLED,
+                bg=self.COLORS["panel"]
+            )
+
+            self.undo_button.config(
+                state=tk.DISABLED,
+                bg=self.COLORS["panel"]
+            )
+
+            self.clear_button.config(
+                state=tk.DISABLED,
+                bg=self.COLORS["panel"]
+            )
+
+            self.browse_button.config(
+                state=tk.DISABLED,
+                bg=self.COLORS["panel"]
+            )
+
+            return
+
+        # ------------------------------------------------------------
+        # PREVIEW
+        # ------------------------------------------------------------
+
         self.preview_button.config(
             state=(
                 tk.NORMAL
@@ -902,6 +1027,10 @@ class FileOrganizerApp:
                 else tk.DISABLED
             )
         )
+
+        # ------------------------------------------------------------
+        # ORGANIZE
+        # ------------------------------------------------------------
 
         self.organize_button.config(
             state=(
@@ -911,6 +1040,10 @@ class FileOrganizerApp:
             )
         )
 
+        # ------------------------------------------------------------
+        # UNDO
+        # ------------------------------------------------------------
+
         self.undo_button.config(
             state=(
                 tk.NORMAL
@@ -919,7 +1052,26 @@ class FileOrganizerApp:
             )
         )
 
-        # Update button colors after state change
+        # ------------------------------------------------------------
+        # CLEAR
+        # ------------------------------------------------------------
+
+        self.clear_button.config(
+            state=tk.NORMAL
+        )
+
+        # ------------------------------------------------------------
+        # BROWSE
+        # ------------------------------------------------------------
+
+        self.browse_button.config(
+            state=tk.NORMAL
+        )
+
+        # ------------------------------------------------------------
+        # COLORS
+        # ------------------------------------------------------------
+
         if has_folder:
             self.preview_button.config(
                 bg=self.COLORS["panel_light"]
@@ -1009,7 +1161,7 @@ class FileOrganizerApp:
             "════════════════════════════════════════",
             "",
             f"Total files detected: {len(files)}",
-            "",
+            ""
         ]
 
         lines.extend(
@@ -1049,6 +1201,9 @@ class FileOrganizerApp:
         return "\n".join(lines)
 
     def preview_files(self):
+        if self.is_busy:
+            return
+
         if not self.selected_folder:
             messagebox.showwarning(
                 "No Folder Selected",
@@ -1056,11 +1211,13 @@ class FileOrganizerApp:
             )
             return
 
-        self.set_status(
+        if not self.validate_selected_folder():
+            return
+
+        self.set_busy(
+            True,
             "Scanning selected folder..."
         )
-
-        self.root.update_idletasks()
 
         try:
             files = get_files(
@@ -1071,7 +1228,8 @@ class FileOrganizerApp:
                 self.show_message(
                     "NO FILES FOUND\n\n"
                     "The selected folder does not contain "
-                    "any files to organize."
+                    "any files to organize.\n\n"
+                    "Subfolders are intentionally ignored."
                 )
 
                 self.set_status(
@@ -1090,14 +1248,11 @@ class FileOrganizerApp:
             )
 
             self.set_status(
-                f"Preview ready • {len(files)} file(s) detected"
+                f"Preview ready • "
+                f"{len(files)} file(s) detected"
             )
 
-        except (
-            FileNotFoundError,
-            NotADirectoryError
-        ) as error:
-
+        except FileNotFoundError as error:
             self.set_status(
                 "Unable to access selected folder."
             )
@@ -1107,25 +1262,65 @@ class FileOrganizerApp:
                 str(error)
             )
 
-        except OSError as error:
+        except NotADirectoryError as error:
+            self.set_status(
+                "Selected path is not a folder."
+            )
 
+            messagebox.showerror(
+                "Folder Error",
+                str(error)
+            )
+
+        except PermissionError as error:
+            self.set_status(
+                "Permission denied."
+            )
+
+            messagebox.showerror(
+                "Permission Error",
+                (
+                    "The application does not have permission "
+                    "to read this folder.\n\n"
+                    f"{error}"
+                )
+            )
+
+        except OSError as error:
             self.set_status(
                 "Folder could not be read."
             )
 
             messagebox.showerror(
                 "File System Error",
-                f"Could not read the folder.\n\n{error}"
+                (
+                    "Could not read the folder.\n\n"
+                    f"{error}"
+                )
             )
+
+        except Exception as error:
+            self.set_status(
+                "Unexpected preview error."
+            )
+
+            messagebox.showerror(
+                "Unexpected Error",
+                (
+                    "An unexpected error occurred "
+                    "while creating the preview.\n\n"
+                    f"{error}"
+                )
+            )
+
+        finally:
+            self.set_busy(False)
 
     # ================================================================
     # ORGANIZATION SUMMARY
     # ================================================================
 
-    def create_organization_summary(
-        self,
-        moved_files
-    ):
+    def create_organization_summary(self, moved_files):
         counts = Counter(
             item["category"]
             for item in moved_files
@@ -1137,7 +1332,7 @@ class FileOrganizerApp:
             "",
             f"Successfully organized "
             f"{len(moved_files)} file(s).",
-            "",
+            ""
         ]
 
         lines.extend(
@@ -1162,13 +1357,27 @@ class FileOrganizerApp:
                 "•"
             )
 
+            source = item.get("source")
+            destination = item.get("destination")
+
+            filename = (
+                source.name
+                if source is not None
+                else "Unknown file"
+            )
+
             lines.append(
-                f"{icon} {item['source'].name}"
+                f"{icon} {filename}"
             )
 
             lines.append(
                 f"    └─ {category}"
             )
+
+            if destination is not None:
+                lines.append(
+                    f"       → {destination.name}"
+                )
 
             lines.append("")
 
@@ -1179,6 +1388,9 @@ class FileOrganizerApp:
     # ================================================================
 
     def organize_files(self):
+        if self.is_busy:
+            return
+
         if not self.selected_folder:
             messagebox.showwarning(
                 "No Folder Selected",
@@ -1186,25 +1398,62 @@ class FileOrganizerApp:
             )
             return
 
+        if not self.validate_selected_folder():
+            return
+
+        try:
+            files = get_files(
+                self.selected_folder
+            )
+        except OSError as error:
+            messagebox.showerror(
+                "Folder Error",
+                f"Could not read the selected folder.\n\n{error}"
+            )
+            return
+
+        if not files:
+            self.show_message(
+                "NOTHING TO ORGANIZE\n\n"
+                "No regular files were found directly "
+                "inside the selected folder."
+            )
+
+            self.set_status(
+                "No files were found to organize."
+            )
+
+            return
+
+        counts = self.get_category_counts(files)
+
+        summary_lines = self.create_category_summary(
+            counts,
+            len(files)
+        )
+
+        confirmation_text = (
+            f"Organize {len(files)} file(s) in this folder?\n\n"
+            "Files will be moved into these categories:\n\n"
+            + "\n".join(summary_lines[3:])
+            + "\n\n"
+            "Existing destination files will not be overwritten.\n"
+            "Duplicate filenames will receive a safe suffix.\n\n"
+            "Continue?"
+        )
+
         confirmation = messagebox.askyesno(
             "Confirm Organization",
-            (
-                "Organize all files in this folder?\n\n"
-                "• Files will be moved into category folders.\n"
-                "• Existing files will not be overwritten.\n"
-                "• Duplicate names will receive a safe suffix.\n\n"
-                "Continue?"
-            )
+            confirmation_text
         )
 
         if not confirmation:
             return
 
-        self.set_status(
+        self.set_busy(
+            True,
             "Organizing files..."
         )
-
-        self.root.update_idletasks()
 
         try:
             moved_files = organize_folder(
@@ -1213,8 +1462,6 @@ class FileOrganizerApp:
 
             if not moved_files:
                 self.last_operation = None
-
-                self.update_button_states()
 
                 self.show_message(
                     "NOTHING TO ORGANIZE\n\n"
@@ -1229,12 +1476,8 @@ class FileOrganizerApp:
 
             self.last_operation = moved_files
 
-            self.update_button_states()
-
-            summary = (
-                self.create_organization_summary(
-                    moved_files
-                )
+            summary = self.create_organization_summary(
+                moved_files
             )
 
             self.show_result(
@@ -1257,11 +1500,7 @@ class FileOrganizerApp:
                 )
             )
 
-        except (
-            FileNotFoundError,
-            NotADirectoryError
-        ) as error:
-
+        except FileNotFoundError as error:
             self.set_status(
                 "Organization failed."
             )
@@ -1271,8 +1510,31 @@ class FileOrganizerApp:
                 str(error)
             )
 
-        except OSError as error:
+        except NotADirectoryError as error:
+            self.set_status(
+                "Organization failed."
+            )
 
+            messagebox.showerror(
+                "Organization Error",
+                str(error)
+            )
+
+        except PermissionError as error:
+            self.set_status(
+                "Permission denied."
+            )
+
+            messagebox.showerror(
+                "Permission Error",
+                (
+                    "The application does not have permission "
+                    "to modify this folder.\n\n"
+                    f"{error}"
+                )
+            )
+
+        except OSError as error:
             self.set_status(
                 "Organization failed."
             )
@@ -1285,14 +1547,28 @@ class FileOrganizerApp:
                 )
             )
 
+        except Exception as error:
+            self.set_status(
+                "Unexpected organization error."
+            )
+
+            messagebox.showerror(
+                "Unexpected Error",
+                (
+                    "An unexpected error occurred "
+                    "while organizing the files.\n\n"
+                    f"{error}"
+                )
+            )
+
+        finally:
+            self.set_busy(False)
+
     # ================================================================
     # UNDO SUMMARY
     # ================================================================
 
-    def create_undo_summary(
-        self,
-        restored_files
-    ):
+    def create_undo_summary(self, restored_files):
         lines = [
             "UNDO COMPLETE",
             "════════════════════════════════════════",
@@ -1306,8 +1582,15 @@ class FileOrganizerApp:
         ]
 
         for item in restored_files:
+            source = item.get("source")
+
+            if source is not None:
+                filename = source.name
+            else:
+                filename = "Unknown file"
+
             lines.append(
-                f"↶ {item['source'].name}"
+                f"↶ {filename}"
             )
 
             lines.append(
@@ -1323,6 +1606,9 @@ class FileOrganizerApp:
     # ================================================================
 
     def undo_last_operation(self):
+        if self.is_busy:
+            return
+
         if not self.last_operation:
             messagebox.showinfo(
                 "Nothing to Undo",
@@ -1338,65 +1624,148 @@ class FileOrganizerApp:
             (
                 "Restore the files to their original "
                 "locations?\n\n"
-                "This will reverse the most recent "
-                "organization operation."
+                f"{len(self.last_operation)} file(s) are "
+                "available for restoration.\n\n"
+                "Existing files at the original locations "
+                "will never be overwritten.\n\n"
+                "Continue?"
             )
         )
 
         if not confirmation:
             return
 
-        self.set_status(
+        self.set_busy(
+            True,
             "Restoring files..."
         )
 
-        self.root.update_idletasks()
-
         try:
-            restored_files = undo_organization(
+            operation = list(
                 self.last_operation
             )
 
-            self.last_operation = None
-
-            self.update_button_states()
+            restored_files = undo_organization(
+                operation
+            )
 
             if not restored_files:
-                self.show_message(
-                    "NOTHING WAS RESTORED\n\n"
-                    "No files could be restored."
+                remaining = self.get_remaining_undo_items(
+                    operation
                 )
 
-                self.set_status(
-                    "No files could be restored."
-                )
+                if remaining:
+                    self.last_operation = remaining
+
+                    self.show_message(
+                        "NOTHING WAS RESTORED\n\n"
+                        "The files could not be restored because "
+                        "their original locations are unavailable "
+                        "or already contain files.\n\n"
+                        "The Undo operation remains available."
+                    )
+
+                    self.set_status(
+                        f"Undo incomplete • "
+                        f"{len(remaining)} file(s) remain"
+                    )
+
+                else:
+                    self.last_operation = None
+
+                    self.show_message(
+                        "NOTHING WAS RESTORED\n\n"
+                        "No files could be restored."
+                    )
+
+                    self.set_status(
+                        "No files could be restored."
+                    )
 
                 return
+
+            remaining = self.get_remaining_undo_items(
+                operation
+            )
 
             summary = self.create_undo_summary(
                 restored_files
             )
+
+            if remaining:
+                summary += (
+                    "\n"
+                    "PARTIAL UNDO\n"
+                    "────────────────────────────────────────\n\n"
+                    f"{len(remaining)} file(s) could not be restored.\n"
+                    "The Undo button remains available so you can "
+                    "try again later."
+                )
 
             self.show_result(
                 summary,
                 len(restored_files)
             )
 
+            if remaining:
+                self.last_operation = remaining
+
+                self.set_status(
+                    f"Partial undo • "
+                    f"{len(restored_files)} restored • "
+                    f"{len(remaining)} remaining"
+                )
+
+                messagebox.showwarning(
+                    "Partial Undo",
+                    (
+                        f"{len(restored_files)} file(s) were restored.\n\n"
+                        f"{len(remaining)} file(s) could not be "
+                        "restored and remain in Undo history."
+                    )
+                )
+
+            else:
+                self.last_operation = None
+
+                self.set_status(
+                    f"Undo complete • "
+                    f"{len(restored_files)} file(s) restored"
+                )
+
+                messagebox.showinfo(
+                    "Undo Complete",
+                    (
+                        f"Successfully restored "
+                        f"{len(restored_files)} file(s)."
+                    )
+                )
+
+        except FileNotFoundError as error:
             self.set_status(
-                f"Undo complete • "
-                f"{len(restored_files)} file(s) restored"
+                "Some files could not be found."
             )
 
-            messagebox.showinfo(
-                "Undo Complete",
+            messagebox.showerror(
+                "Undo Error",
+                str(error)
+            )
+
+        except PermissionError as error:
+            self.set_status(
+                "Permission denied during undo."
+            )
+
+            messagebox.showerror(
+                "Permission Error",
                 (
-                    f"Successfully restored "
-                    f"{len(restored_files)} file(s)."
+                    "The application does not have permission "
+                    "to restore the files.\n\n"
+                    f"{error}"
                 )
             )
 
         except OSError as error:
-
             self.set_status(
                 "Undo operation failed."
             )
@@ -1409,11 +1778,55 @@ class FileOrganizerApp:
                 )
             )
 
+        except Exception as error:
+            self.set_status(
+                "Unexpected undo error."
+            )
+
+            messagebox.showerror(
+                "Unexpected Error",
+                (
+                    "An unexpected error occurred "
+                    "while restoring the files.\n\n"
+                    f"{error}"
+                )
+            )
+
+        finally:
+            self.set_busy(False)
+
+    def get_remaining_undo_items(self, operation):
+        """
+        Return only files that still appear to need restoration.
+
+        A file remains pending when its destination still exists
+        and its original source does not exist.
+        """
+
+        remaining = []
+
+        for item in operation:
+            source = Path(
+                item["source"]
+            )
+
+            destination = Path(
+                item["destination"]
+            )
+
+            if destination.exists() and not source.exists():
+                remaining.append(item)
+
+        return remaining
+
     # ================================================================
     # FOLDER SELECTION
     # ================================================================
 
     def select_folder(self):
+        if self.is_busy:
+            return
+
         folder = filedialog.askdirectory(
             title="Select folder to organize"
         )
@@ -1425,26 +1838,36 @@ class FileOrganizerApp:
             folder
         )
 
-        if not selected_path.exists():
+        try:
+            if not selected_path.exists():
+                messagebox.showerror(
+                    "Invalid Folder",
+                    "The selected folder no longer exists."
+                )
+                return
+
+            if not selected_path.is_dir():
+                messagebox.showerror(
+                    "Invalid Folder",
+                    "The selected path is not a folder."
+                )
+                return
+
+        except OSError as error:
             messagebox.showerror(
-                "Invalid Folder",
-                "The selected folder no longer exists."
+                "Folder Error",
+                f"Could not access the selected folder.\n\n{error}"
             )
             return
 
-        if not selected_path.is_dir():
-            messagebox.showerror(
-                "Invalid Folder",
-                "The selected path is not a folder."
-            )
-            return
+        # ------------------------------------------------------------
+        # New folder invalidates previous undo history.
+        # ------------------------------------------------------------
 
         self.selected_folder = str(
             selected_path
         )
 
-        # Selecting another folder invalidates
-        # the previous undo operation.
         self.last_operation = None
 
         self.set_folder_entry(
@@ -1469,6 +1892,24 @@ class FileOrganizerApp:
     # ================================================================
 
     def clear(self):
+        if self.is_busy:
+            return
+
+        if self.last_operation:
+            confirmation = messagebox.askyesno(
+                "Clear Current Session",
+                (
+                    "An organization operation can still be undone.\n\n"
+                    "Clearing now will discard the Undo history.\n\n"
+                    "The files themselves will NOT be restored "
+                    "automatically.\n\n"
+                    "Continue?"
+                )
+            )
+
+            if not confirmation:
+                return
+
         self.selected_folder = None
         self.last_operation = None
 
@@ -1478,21 +1919,24 @@ class FileOrganizerApp:
 
         self.update_button_states()
 
-        self.show_message(
-            "WELCOME TO FILE ORGANIZER\n\n"
-            "Select a folder to begin organizing "
-            "your files."
-        )
-
-        self.set_status(
-            "Ready • Select a folder to get started"
-        )
+        self.show_welcome()
 
     # ================================================================
     # CLOSE
     # ================================================================
 
     def close_application(self):
+        if self.is_busy:
+            messagebox.showwarning(
+                "Operation In Progress",
+                (
+                    "Please wait until the current "
+                    "operation finishes before closing "
+                    "the application."
+                )
+            )
+            return
+
         if self.last_operation:
             confirmation = messagebox.askyesno(
                 "Exit File Organizer",
@@ -1501,6 +1945,8 @@ class FileOrganizerApp:
                     "that can still be undone.\n\n"
                     "If you exit now, the Undo history "
                     "will be lost.\n\n"
+                    "The files will remain in their current "
+                    "organized locations.\n\n"
                     "Are you sure you want to exit?"
                 )
             )
@@ -1525,3 +1971,11 @@ def start_app():
     )
 
     root.mainloop()
+
+
+# ====================================================================
+# DIRECT EXECUTION
+# ====================================================================
+
+if __name__ == "__main__":
+    start_app()

@@ -2,9 +2,9 @@ from pathlib import Path
 import shutil
 
 
-# ---------------------------------------------------------------------------
-# File categories
-# ---------------------------------------------------------------------------
+# ============================================================================
+# FILE CATEGORIES
+# ============================================================================
 
 FILE_CATEGORIES = {
     "Images": {
@@ -19,6 +19,7 @@ FILE_CATEGORIES = {
         ".tiff",
         ".tif",
     },
+
     "Documents": {
         ".pdf",
         ".doc",
@@ -32,6 +33,7 @@ FILE_CATEGORIES = {
         ".ppt",
         ".pptx",
     },
+
     "Videos": {
         ".mp4",
         ".mkv",
@@ -42,6 +44,7 @@ FILE_CATEGORIES = {
         ".webm",
         ".m4v",
     },
+
     "Music": {
         ".mp3",
         ".wav",
@@ -51,6 +54,7 @@ FILE_CATEGORIES = {
         ".m4a",
         ".wma",
     },
+
     "Archives": {
         ".zip",
         ".rar",
@@ -60,6 +64,7 @@ FILE_CATEGORIES = {
         ".bz2",
         ".xz",
     },
+
     "Programs": {
         ".exe",
         ".msi",
@@ -77,9 +82,9 @@ FILE_CATEGORIES = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Special compound extensions
-# ---------------------------------------------------------------------------
+# ============================================================================
+# SPECIAL COMPOUND EXTENSIONS
+# ============================================================================
 
 COMPOUND_EXTENSIONS = {
     ".tar.gz",
@@ -88,9 +93,9 @@ COMPOUND_EXTENSIONS = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Precomputed extension lookup
-# ---------------------------------------------------------------------------
+# ============================================================================
+# PRECOMPUTED EXTENSION LOOKUP
+# ============================================================================
 
 EXTENSION_TO_CATEGORY = {
     extension: category
@@ -99,9 +104,9 @@ EXTENSION_TO_CATEGORY = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Category detection
-# ---------------------------------------------------------------------------
+# ============================================================================
+# CATEGORY DETECTION
+# ============================================================================
 
 def get_category(file_path):
     """
@@ -121,7 +126,7 @@ def get_category(file_path):
 
     file_path = Path(file_path)
 
-    filename = file_path.name.lower()
+    filename = file_path.name.casefold()
 
     # Check compound extensions first.
     for extension in COMPOUND_EXTENSIONS:
@@ -129,7 +134,7 @@ def get_category(file_path):
             return "Archives"
 
     # Check normal extension.
-    extension = file_path.suffix.lower()
+    extension = file_path.suffix.casefold()
 
     return EXTENSION_TO_CATEGORY.get(
         extension,
@@ -137,18 +142,26 @@ def get_category(file_path):
     )
 
 
-# ---------------------------------------------------------------------------
-# Folder scanning
-# ---------------------------------------------------------------------------
+# ============================================================================
+# FOLDER VALIDATION
+# ============================================================================
 
-def get_files(folder):
+def _validate_folder(folder):
     """
-    Return regular files directly inside the selected folder.
+    Validate and normalize a folder path.
 
-    Subdirectories are ignored.
+    Returns:
+        Path: validated folder path.
 
-    Symbolic links are ignored to avoid unexpectedly moving files
-    located outside the selected folder.
+    Raises:
+        FileNotFoundError:
+            If the folder does not exist.
+
+        NotADirectoryError:
+            If the supplied path is not a directory.
+
+        PermissionError:
+            If the folder cannot be accessed.
     """
 
     folder = Path(folder)
@@ -163,14 +176,57 @@ def get_files(folder):
             "The selected path is not a folder."
         )
 
+    # Verify that the directory can actually be inspected.
+    try:
+        next(folder.iterdir(), None)
+    except PermissionError:
+        raise PermissionError(
+            "Permission denied while accessing the selected folder."
+        )
+
+    return folder
+
+
+# ============================================================================
+# FOLDER SCANNING
+# ============================================================================
+
+def get_files(folder):
+    """
+    Return regular files directly inside the selected folder.
+
+    Subdirectories are ignored.
+
+    Symbolic links are ignored to avoid unexpectedly moving files
+    located outside the selected folder.
+
+    Files are returned in stable case-insensitive alphabetical order.
+    """
+
+    folder = _validate_folder(folder)
+
     files = []
 
-    for item in folder.iterdir():
-        if item.is_symlink():
-            continue
+    try:
+        for item in folder.iterdir():
 
-        if item.is_file():
-            files.append(item)
+            # Never follow symbolic links.
+            if item.is_symlink():
+                continue
+
+            # Only process regular files.
+            if item.is_file():
+                files.append(item)
+
+    except PermissionError:
+        raise PermissionError(
+            "Permission denied while reading the selected folder."
+        )
+
+    except OSError as error:
+        raise OSError(
+            f"Could not read the selected folder: {error}"
+        ) from error
 
     # Stable ordering makes previews, testing, and operation
     # results predictable.
@@ -181,9 +237,9 @@ def get_files(folder):
     return files
 
 
-# ---------------------------------------------------------------------------
-# Unique filename generation
-# ---------------------------------------------------------------------------
+# ============================================================================
+# UNIQUE FILENAME GENERATION
+# ============================================================================
 
 def get_unique_path(folder, filename):
     """
@@ -192,6 +248,7 @@ def get_unique_path(folder, filename):
     The original filename is never returned.
 
     Examples:
+
         photo.jpg
         -> photo_1.jpg
 
@@ -201,6 +258,7 @@ def get_unique_path(folder, filename):
         README with README_1 existing
         -> README_2
     """
+
     folder = Path(folder)
     original = Path(filename)
 
@@ -220,70 +278,125 @@ def get_unique_path(folder, filename):
         counter += 1
 
 
-# ---------------------------------------------------------------------------
-# Organization
-# ---------------------------------------------------------------------------
+# ============================================================================
+# SAFE DESTINATION PATH
+# ============================================================================
+
+def _get_destination_path(destination, filename):
+    """
+    Return the safest available destination path for a filename.
+
+    The original filename is preserved whenever possible.
+
+    If a collision exists, a unique filename is generated.
+    """
+
+    destination = Path(destination)
+    filename = Path(filename)
+
+    target = destination / filename.name
+
+    if not target.exists():
+        return target
+
+    return get_unique_path(
+        destination,
+        filename.name,
+    )
+
+
+# ============================================================================
+# ORGANIZATION
+# ============================================================================
 
 def organize_folder(folder):
     """
     Organize files in a folder into category subdirectories.
 
-    Returns a list describing every successful move.
+    Returns:
+        list[dict]:
+            Information about every successfully moved file.
 
-    Files keep their original filename unless a file with the
-    same name already exists in the destination category folder.
-    In that case, a unique filename is generated.
+    Each dictionary contains:
+
+        source
+            Original file path.
+
+        destination
+            Final destination path.
+
+        category
+            Category assigned to the file.
+
+    Files keep their original filename whenever possible.
+
+    If a filename collision occurs, a safe suffix is added.
 
     If a move fails after previous files have already been moved,
     the function attempts to restore those previous files before
     re-raising the original filesystem error.
+
+    Existing files are never overwritten.
     """
-    folder = Path(folder)
+
+    folder = _validate_folder(folder)
+
     files = get_files(folder)
 
     moved_files = []
 
     try:
+
         for file_path in files:
+
+            # Determine category before creating anything.
             category = get_category(file_path)
+
             destination = folder / category
 
+            # Create category folder only when necessary.
             destination.mkdir(
                 exist_ok=True
             )
 
-            # Preserve the original filename whenever possible.
-            target = destination / file_path.name
-
-            # Only generate a unique name when there is
-            # actually a filename collision.
-            if target.exists():
-                target = get_unique_path(
-                    destination,
-                    file_path.name
-                )
-
-            shutil.move(
-                str(file_path),
-                str(target)
+            # Calculate a collision-safe destination.
+            target = _get_destination_path(
+                destination,
+                file_path.name,
             )
 
-            moved_files.append({
-                "source": file_path,
-                "destination": target,
-                "category": category
-            })
+            # Move the file.
+            shutil.move(
+                str(file_path),
+                str(target),
+            )
 
-    except OSError:
-        _rollback_moves(moved_files)
+            # Record successful move only AFTER the move succeeds.
+            moved_files.append(
+                {
+                    "source": file_path,
+                    "destination": target,
+                    "category": category,
+                }
+            )
+
+    except (OSError, shutil.Error):
+
+        # Attempt to restore every file that was successfully moved
+        # before the failure occurred.
+        _rollback_moves(
+            moved_files
+        )
+
+        # Re-raise the original error.
         raise
 
     return moved_files
 
 
-# ---------------------------------------------------------------------------
-# Rollback
-# ---------------------------------------------------------------------------
+# ============================================================================
+# ROLLBACK
+# ============================================================================
 
 def _rollback_moves(moved_files):
     """
@@ -296,39 +409,53 @@ def _rollback_moves(moved_files):
 
     Existing source files are never overwritten.
 
-    Any rollback error is intentionally ignored so that the original
-    organization error can be re-raised to the caller.
+    Rollback errors are intentionally ignored so the original
+    organization failure can be re-raised to the caller.
     """
 
     for item in reversed(moved_files):
-        source = Path(item["source"])
-        destination = Path(item["destination"])
 
+        source = Path(
+            item["source"]
+        )
+
+        destination = Path(
+            item["destination"]
+        )
+
+        # Destination no longer exists.
         if not destination.exists():
             continue
 
+        # Never overwrite an existing source file.
         if source.exists():
             continue
 
         try:
+
             source.parent.mkdir(
                 parents=True,
                 exist_ok=True,
             )
+
+            # If another process created the source between
+            # the existence check and this move, avoid overwriting it.
+            if source.exists():
+                continue
 
             shutil.move(
                 str(destination),
                 str(source),
             )
 
-        except OSError:
+        except (OSError, shutil.Error):
             # Never hide the original organization failure.
             continue
 
 
-# ---------------------------------------------------------------------------
-# Undo
-# ---------------------------------------------------------------------------
+# ============================================================================
+# UNDO
+# ============================================================================
 
 def undo_organization(moved_files):
     """
@@ -338,7 +465,22 @@ def undo_organization(moved_files):
 
     Existing files at the original location are never overwritten.
 
-    Returns a list describing every successfully restored file.
+    Missing destination files are skipped.
+
+    If a destination filename is unexpectedly occupied by another file,
+    the file is NOT overwritten.
+
+    Returns:
+        list[dict]:
+            Information about every successfully restored file.
+
+    Each dictionary contains:
+
+        source
+            Previous organized location.
+
+        destination
+            Original location.
     """
 
     if not moved_files:
@@ -347,8 +489,14 @@ def undo_organization(moved_files):
     restored_files = []
 
     for item in reversed(moved_files):
-        source = Path(item["source"])
-        destination = Path(item["destination"])
+
+        source = Path(
+            item["source"]
+        )
+
+        destination = Path(
+            item["destination"]
+        )
 
         # The organized file has already disappeared.
         if not destination.exists():
@@ -359,10 +507,17 @@ def undo_organization(moved_files):
             continue
 
         try:
+
             source.parent.mkdir(
                 parents=True,
                 exist_ok=True,
             )
+
+            # Re-check immediately before moving.
+            # This protects against a file appearing at the
+            # original location after the first check.
+            if source.exists():
+                continue
 
             shutil.move(
                 str(destination),
@@ -376,8 +531,8 @@ def undo_organization(moved_files):
                 }
             )
 
-        except OSError:
-            # Continue attempting to restore the remaining files.
+        except (OSError, shutil.Error):
+            # Continue attempting to restore remaining files.
             continue
 
     return restored_files
