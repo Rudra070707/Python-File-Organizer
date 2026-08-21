@@ -10,29 +10,29 @@ It is designed to be **simple, offline, dependency-free at runtime, and safe aga
 
 ---
 
-## ✨ Features
+## Features
 
-* 🖥️ Clean graphical desktop interface
-* 📁 Select any local folder
-* 👀 Preview files before organizing
-* 🗂️ Automatic file categorization
-* 🔒 Safe duplicate filename handling
-* ↩️ Undo the most recent organization operation
-* 📦 Supports multiple common file types
-* ❓ Unknown file types are placed in `Others`
-* 🛡️ Prevents accidental overwriting of existing files
-* 🔄 Rollback protection if organization encounters a filesystem error
-* ⚡ Fast extension-based categorization
-* ⌨️ Keyboard shortcuts
-* 🌐 No internet connection required
-* 📦 No third-party runtime packages required
-* 🧪 Automated test suite
-* 🪟 Windows standalone executable available
-* 🌙 Premium dark-themed graphical interface
+* Clean graphical desktop interface
+* Select any local folder
+* Preview files before organizing
+* Automatic file categorization
+* Safe duplicate filename handling
+* Undo the most recent organization operation
+* Supports multiple common file types
+* Unknown file types are placed in `Others`
+* Prevents accidental overwriting of existing files
+* Rollback protection if organization encounters a filesystem error
+* Fast extension-based categorization
+* Keyboard shortcuts
+* No internet connection required
+* No third-party runtime packages required
+* Automated test suite
+* Windows standalone executable available
+* Premium dark-themed graphical interface
 
 ---
 
-## 🖼️ Screenshots
+## Screenshots
 
 ### Main Window
 
@@ -52,7 +52,7 @@ It is designed to be **simple, offline, dependency-free at runtime, and safe aga
 
 ---
 
-## 📥 Download
+## Download
 
 ### Windows
 
@@ -60,9 +60,13 @@ The latest stable Windows release is:
 
 **File Organizer v1.0.0**
 
-Download the Windows ZIP from the project's **GitHub Releases** page:
+Download the Windows ZIP package from the project's **GitHub Releases** page.
 
-**`FileOrganizer-v1.0.0-Windows.zip`**
+Release package:
+
+```text
+FileOrganizer-v1.0.0-Windows.zip
+```
 
 ### Installation
 
@@ -79,7 +83,7 @@ No Python installation is required for the standalone Windows release.
 
 ---
 
-## 📂 File Categories
+## File Categories
 
 | Category            | Examples                                                                                                            |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------- |
@@ -93,29 +97,35 @@ No Python installation is required for the standalone Windows release.
 
 ---
 
-## 🖥️ Application Workflow
+## Application Workflow
 
 The application follows a simple workflow:
 
 ```text
 Select Folder
-     ↓
+     |
+     v
 Preview Files
-     ↓
+     |
+     v
 Review Categories
-     ↓
+     |
+     v
 Organize Files
-     ↓
+     |
+     v
 Confirm Operation
-     ↓
+     |
+     v
 Files Moved Safely
-     ↓
+     |
+     v
 Undo if Required
 ```
 
 ---
 
-## 🔍 Preview
+## Preview
 
 Before moving anything, the application can generate a preview showing:
 
@@ -144,20 +154,20 @@ Files
 -----
 
 photo.jpg
-    → Images
+    -> Images
 
 document.pdf
-    → Documents
+    -> Documents
 
 song.mp3
-    → Music
+    -> Music
 ```
 
 The preview does **not** modify any files.
 
 ---
 
-## 🔒 Duplicate Filename Handling
+## Duplicate Filename Handling
 
 Existing files are never overwritten.
 
@@ -185,7 +195,7 @@ This prevents accidental data loss and is covered by the automated test suite.
 
 ---
 
-## ↩️ Undo
+## Undo
 
 The application records the most recent organization operation during the current application session.
 
@@ -201,25 +211,25 @@ After organizing files, **Undo** can restore the moved files to their original l
 
 ---
 
-## 🛡️ Safe File Operations
+## Safe File Operations
 
 The organizer is designed to avoid destructive file operations.
 
-### Existing destination files
+### Existing Destination Files
 
 Existing files are never overwritten.
 
-### Organization failure
+### Organization Failure
 
 If a filesystem error occurs after some files have already been moved, the application attempts to roll back previously completed moves.
 
-### Undo conflicts
+### Undo Conflicts
 
 If a file already exists at its original location, the organizer does not overwrite it.
 
 ---
 
-## ⌨️ Keyboard Shortcuts
+## Keyboard Shortcuts
 
 | Shortcut     | Action                  |
 | ------------ | ----------------------- |
@@ -230,9 +240,9 @@ If a file already exists at its original location, the organizer does not overwr
 
 ---
 
-## 📋 Requirements
+## Requirements
 
-### Running from source
+### Running from Source
 
 * Windows, Linux, or macOS
 * Python 3.13 or compatible Python 3 version
@@ -242,7 +252,7 @@ The application uses Python's standard library for runtime functionality.
 
 No third-party Python packages are required to run the source version.
 
-### Development / Testing Requirements
+### Development and Testing Requirements
 
 The project uses:
 
@@ -253,7 +263,7 @@ These packages are only required for development, testing, and packaging.
 
 ---
 
-## 🚀 Running from Source
+## Running from Source
 
 Clone or download the repository and open a terminal in the project root.
 
@@ -267,7 +277,7 @@ The File Organizer window will open.
 
 ---
 
-## 📖 Basic Usage
+## Basic Usage
 
 1. Launch the application.
 2. Click **Browse Folder**.
@@ -282,17 +292,17 @@ The File Organizer window will open.
 
 ---
 
-## 🪟 Windows Standalone EXE
+## Windows Standalone EXE
 
 A standalone Windows executable is generated using **PyInstaller**.
 
-The release uses PyInstaller's **one-folder distribution** format:
+The release uses the **one-folder distribution** format:
 
 ```text
 dist/
-└── FileOrganizer/
-    ├── _internal/
-    └── FileOrganizer.exe
+`-- FileOrganizer/
+    |-- _internal/
+    `-- FileOrganizer.exe
 ```
 
 The complete `FileOrganizer` folder must remain intact because the executable depends on the files contained inside `_internal`.
@@ -301,7 +311,7 @@ The application can then be launched without manually running Python.
 
 ---
 
-## 🏗️ Building the Windows EXE
+## Building the Windows EXE
 
 ### Install PyInstaller
 
@@ -309,7 +319,7 @@ The application can then be launched without manually running Python.
 python -m pip install pyinstaller
 ```
 
-### Build using the project specification
+### Build Using the Project Specification
 
 From the project root:
 
@@ -323,7 +333,7 @@ The executable will be generated inside:
 dist\FileOrganizer\FileOrganizer.exe
 ```
 
-### Build Output
+### Build Configuration
 
 The project uses:
 
@@ -337,7 +347,7 @@ Generated build files are intentionally excluded from Git using `.gitignore`.
 
 ---
 
-## 📦 Creating the Windows Release ZIP
+## Creating the Windows Release ZIP
 
 After successfully building the application:
 
@@ -355,7 +365,7 @@ The ZIP contains the complete standalone application directory.
 
 ---
 
-## 🧪 Testing
+## Testing
 
 The project uses **pytest** for automated testing.
 
@@ -404,7 +414,7 @@ The test suite covers:
 
 ---
 
-## 🔎 Syntax / Compilation Check
+## Syntax and Compilation Check
 
 Python source files can also be checked using:
 
@@ -416,22 +426,22 @@ A successful compilation indicates that the Python source files compile without 
 
 ---
 
-## 🧪 Release Validation
+## Release Validation
 
 The v1.0.0 release was validated through multiple stages.
 
 ### Source Application
 
-* ✅ GUI launched successfully
-* ✅ Folder browsing tested
-* ✅ File preview tested
-* ✅ File organization tested
-* ✅ Category handling tested
-* ✅ Duplicate filename handling tested
-* ✅ Undo tested
-* ✅ Clear functionality tested
-* ✅ Keyboard shortcuts tested
-* ✅ Closing and reopening tested
+* GUI launched successfully
+* Folder browsing tested
+* File preview tested
+* File organization tested
+* Category handling tested
+* Duplicate filename handling tested
+* Undo tested
+* Clear functionality tested
+* Keyboard shortcuts tested
+* Closing and reopening tested
 
 ### Automated Tests
 
@@ -441,10 +451,10 @@ The v1.0.0 release was validated through multiple stages.
 
 ### Standalone Executable
 
-* ✅ PyInstaller build completed successfully
-* ✅ Windows executable launched successfully
-* ✅ Standalone application tested
-* ✅ Clean-release ZIP tested outside the development project
+* PyInstaller build completed successfully
+* Windows executable launched successfully
+* Standalone application tested
+* Clean-release ZIP tested outside the development project
 
 ### Clean Environment Test
 
@@ -452,13 +462,17 @@ The released ZIP was downloaded and tested as a normal user would use it:
 
 ```text
 GitHub Release
-      ↓
+      |
+      v
 Download ZIP
-      ↓
+      |
+      v
 Extract ZIP
-      ↓
+      |
+      v
 FileOrganizer\FileOrganizer.exe
-      ↓
+      |
+      v
 Application launched successfully
 ```
 
@@ -466,40 +480,44 @@ This validates the distributed release rather than only the development environm
 
 ---
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```text
 Python-File-Organizer/
-│
-├── assets/
-│   └── screenshots/
-│       ├── main-window.png
-│       ├── preview.png
-│       ├── organized-files.png
-│       └── undo.png
-│
-├── src/
-│   ├── main.py
-│   ├── gui.py
-│   └── organizer.py
-│
-├── tests/
-│   └── test_organizer.py
-│
-├── .gitignore
-├── FileOrganizer.spec
-└── README.md
+|
+|-- assets/
+|   `-- screenshots/
+|       |-- main-window.png
+|       |-- preview.png
+|       |-- organized-files.png
+|       `-- undo.png
+|
+|-- src/
+|   |-- main.py
+|   |-- gui.py
+|   `-- organizer.py
+|
+|-- tests/
+|   `-- test_organizer.py
+|
+|-- .gitignore
+|-- CHANGELOG.md
+|-- FileOrganizer.spec
+|-- LICENSE
+`-- README.md
 ```
 
-### Source Files
+---
 
-#### `src/main.py`
+## Source Files
+
+### `src/main.py`
 
 Application entry point.
 
 Starts the graphical user interface.
 
-#### `src/gui.py`
+### `src/gui.py`
 
 Contains the Tkinter graphical interface.
 
@@ -516,7 +534,7 @@ Responsible for:
 * Keyboard shortcuts
 * Application lifecycle
 
-#### `src/organizer.py`
+### `src/organizer.py`
 
 Contains the core file-management logic:
 
@@ -528,46 +546,46 @@ Contains the core file-management logic:
 * Rollback handling
 * Undo operations
 
-#### `tests/test_organizer.py`
+### `tests/test_organizer.py`
 
 Contains automated tests for the organizer logic.
 
 ---
 
-## ⚙️ Technical Design
+## Technical Design
 
 The project separates the graphical interface from the core file-management logic.
 
 ```text
-                 ┌─────────────────┐
-                 │    main.py      │
-                 │ Application     │
-                 │  Entry Point    │
-                 └────────┬────────┘
-                          │
-                          ▼
-                 ┌─────────────────┐
-                 │     gui.py      │
-                 │   Tkinter GUI   │
-                 └────────┬────────┘
-                          │
-                          ▼
-                 ┌─────────────────┐
-                 │  organizer.py   │
-                 │ Core File Logic │
-                 └────────┬────────┘
-                          │
-                          ▼
-                 ┌─────────────────┐
-                 │   File System   │
-                 └─────────────────┘
+                 +-----------------------+
+                 |       main.py         |
+                 |  Application Entry    |
+                 |       Point           |
+                 +-----------+-----------+
+                             |
+                             v
+                 +-----------------------+
+                 |        gui.py         |
+                 |      Tkinter GUI      |
+                 +-----------+-----------+
+                             |
+                             v
+                 +-----------------------+
+                 |     organizer.py      |
+                 |    Core File Logic    |
+                 +-----------+-----------+
+                             |
+                             v
+                 +-----------------------+
+                 |      File System      |
+                 +-----------------------+
 ```
 
 File categorization uses a precomputed extension lookup table so each file can be categorized directly without repeatedly scanning every category.
 
 ---
 
-## 🎯 Design Goals
+## Design Goals
 
 The project intentionally focuses on being:
 
@@ -584,7 +602,7 @@ The project intentionally focuses on being:
 
 ---
 
-## ⚠️ Limitations
+## Limitations
 
 * Undo only applies to the most recent organization operation.
 * Undo history is not saved after closing the application.
@@ -595,7 +613,7 @@ The project intentionally focuses on being:
 
 ---
 
-## 🧰 Technologies
+## Technologies
 
 * **Python 3.13**
 * **Tkinter**
@@ -613,7 +631,7 @@ The application uses Python's standard library for its core functionality.
 
 ---
 
-## 📌 Project Status
+## Project Status
 
 **Version:** `1.0.0`
 
@@ -625,23 +643,39 @@ The application uses Python's standard library for its core functionality.
 
 The current release has been:
 
-* ✅ Compiled successfully
-* ✅ Tested with **28 automated tests**
-* ✅ Manually tested through the graphical interface
-* ✅ Built successfully with **PyInstaller 6.22.2**
-* ✅ Built using **Python 3.13.15**
-* ✅ Tested on **Windows 11**
-* ✅ Tested as a standalone executable
-* ✅ Packaged as a Windows ZIP release
-* ✅ Downloaded and tested from the GitHub Release
-* ✅ Tested from a clean location outside the development project
+* Compiled successfully
+* Tested with **28 automated tests**
+* Manually tested through the graphical interface
+* Built successfully with **PyInstaller 6.22.2**
+* Built using **Python 3.13.15**
+* Tested on **Windows 11**
+* Tested as a standalone executable
+* Packaged as a Windows ZIP release
+* Downloaded and tested from the GitHub Release
+* Tested from a clean location outside the development project
 
 ---
 
-## 📄 License
+## Changelog
 
-This project is currently intended for **educational and personal use**.
+Release history is documented in:
 
-No formal open-source license is currently included with the repository.
+```text
+CHANGELOG.md
+```
 
-If you plan to allow others to freely modify, distribute, or reuse the project, add an appropriate open-source license such as the MIT License.
+Current release:
+
+```text
+v1.0.0
+```
+
+---
+
+## License
+
+This project is licensed under the **MIT License**.
+
+You are free to use, copy, modify, merge, publish, distribute, sublicense, and sell copies of the software, subject to the conditions of the MIT License.
+
+See [`LICENSE`](LICENSE) for the complete license text.
