@@ -328,11 +328,11 @@ def _safe_category_directory(folder: Path, category: str) -> Path:
     """
     destination = folder / category
 
-    try:
-        # --------------------------------------------------------------------
-        # Check the path before creation/access.
-        # --------------------------------------------------------------------
+    # ------------------------------------------------------------------------
+    # Check the path itself before creating/accessing it.
+    # ------------------------------------------------------------------------
 
+    try:
         if destination.is_symlink():
             raise OSError(
                 f"Refusing to use symbolic-link category directory: {destination}"
@@ -343,19 +343,40 @@ def _safe_category_directory(folder: Path, category: str) -> Path:
                 f"Category path is not a directory: {destination}"
             )
 
-        # --------------------------------------------------------------------
-        # Create the directory if necessary.
-        # --------------------------------------------------------------------
+    except PermissionError as error:
+        raise PermissionError(
+            f"Permission denied while accessing category directory: {destination}"
+        ) from error
 
+    except OSError:
+        # Preserve the original exception type.
+        raise
+
+    # ------------------------------------------------------------------------
+    # Create the directory if necessary.
+    # ------------------------------------------------------------------------
+
+    try:
         destination.mkdir(
             parents=True,
             exist_ok=True,
         )
 
-        # --------------------------------------------------------------------
-        # Re-check after mkdir to guard against filesystem races.
-        # --------------------------------------------------------------------
+    except PermissionError as error:
+        raise PermissionError(
+            f"Permission denied while creating category directory: {destination}"
+        ) from error
 
+    except OSError:
+        # Preserve filesystem-specific exceptions such as
+        # FileExistsError / NotADirectoryError.
+        raise
+
+    # ------------------------------------------------------------------------
+    # Re-check after mkdir to guard against filesystem races.
+    # ------------------------------------------------------------------------
+
+    try:
         if destination.is_symlink():
             raise OSError(
                 f"Refusing to use symbolic-link category directory: {destination}"
@@ -367,22 +388,13 @@ def _safe_category_directory(folder: Path, category: str) -> Path:
             )
 
     except PermissionError as error:
-        # Keep the historical/public error message expected by the
-        # project test suite.
         raise PermissionError(
             f"Permission denied while accessing category directory: {destination}"
         ) from error
 
-    except NotADirectoryError:
-        # Preserve the specific filesystem error type and message.
+    except OSError:
+        # Preserve the original exception type.
         raise
-
-    except OSError as error:
-        # Normalize other filesystem failures into the public error
-        # message expected by the project.
-        raise OSError(
-            f"Could not create category directory: {destination}"
-        ) from error
 
     return destination
 
@@ -714,6 +726,7 @@ def _get_destination_path(
 # MOVE HELPER
 # ============================================================================
 
+
 def _move_file(
     source: Path,
     destination: Path,
@@ -721,11 +734,20 @@ def _move_file(
     """
     Move one safe regular file to a destination without overwriting it.
 
-    The destination is checked immediately before the move.
+    The destination is checked immediately before the move. The actual
+    move uses os.rename() rather than shutil.move(), because rename()
+    provides the required non-overwriting behavior when source and
+    destination are on the same filesystem.
 
-    The move is performed through ``shutil.move()`` because the project
-    test suite intentionally patches that function to simulate move
-    failures and filesystem races.
+    Raises:
+        FileNotFoundError:
+            Source disappeared or is no longer a safe regular file.
+
+        FileExistsError:
+            Destination already exists.
+
+        OSError:
+            Underlying filesystem operation failed.
     """
     if not _is_safe_regular_file(source):
         raise FileNotFoundError(
@@ -738,26 +760,16 @@ def _move_file(
         )
 
     try:
-        shutil.move(
-            str(source),
-            str(destination),
-        )
+        source.rename(destination)
 
     except FileExistsError:
+        # The destination appeared between the existence check and rename.
         raise FileExistsError(
             f"Destination already exists: {destination}"
         ) from None
 
     except OSError:
         raise
-
-    # A patched/custom move implementation may create the destination
-    # before delegating to shutil.move(). Never silently accept a move
-    # that leaves the source in place while a destination already exists.
-    if _path_exists(source):
-        raise OSError(
-            f"File move did not complete safely: {source} -> {destination}"
-        )
 
 
 # ============================================================================

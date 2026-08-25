@@ -33,8 +33,6 @@ class FileOrganizerApp:
     MIN_WIDTH = 900
     MIN_HEIGHT = 650
 
-    OPERATION_POLL_INTERVAL = 100
-
     # ================================================================
     # COLOR SYSTEM
     # ================================================================
@@ -120,15 +118,13 @@ class FileOrganizerApp:
         self.operation_queue = queue.Queue()
         self.operation_thread = None
         self.operation_name = None
+        self.operation_cancelled = False
 
         self.configure_window()
         self.create_widgets()
         self.bind_shortcuts()
 
-        self.root.after(
-            self.OPERATION_POLL_INTERVAL,
-            self.process_operation_queue,
-        )
+        self.root.after(100, self.process_operation_queue)
 
         self.update_button_states()
         self.show_welcome()
@@ -142,27 +138,15 @@ class FileOrganizerApp:
 
         self.root.geometry(f"{self.WINDOW_WIDTH}x{self.WINDOW_HEIGHT}")
 
-        self.root.minsize(
-            self.MIN_WIDTH,
-            self.MIN_HEIGHT,
-        )
+        self.root.minsize(self.MIN_WIDTH, self.MIN_HEIGHT)
 
         self.root.configure(bg=self.COLORS["bg"])
 
-        self.root.option_add(
-            "*tearOff",
-            False,
-        )
+        self.root.option_add("*tearOff", False)
 
-        self.root.protocol(
-            "WM_DELETE_WINDOW",
-            self.close_application,
-        )
+        self.root.protocol("WM_DELETE_WINDOW", self.close_application)
 
-        self.root.bind(
-            "<Configure>",
-            self._on_window_resize,
-        )
+        self.root.bind("<Configure>", self._on_window_resize)
 
     def _on_window_resize(self, event):
         if event.widget is not self.root:
@@ -192,25 +176,15 @@ class FileOrganizerApp:
     # ================================================================
 
     def create_top_bar(self):
-        top = tk.Frame(
-            self.root,
-            bg=self.COLORS["bg"],
-        )
+        top = tk.Frame(self.root, bg=self.COLORS["bg"])
 
-        top.pack(
-            fill="x",
-            padx=42,
-            pady=(28, 18),
-        )
+        top.pack(fill="x", padx=42, pady=(28, 18))
 
         # ------------------------------------------------------------
         # LEFT
         # ------------------------------------------------------------
 
-        title_frame = tk.Frame(
-            top,
-            bg=self.COLORS["bg"],
-        )
+        title_frame = tk.Frame(top, bg=self.COLORS["bg"])
 
         title_frame.pack(side="left")
 
@@ -222,15 +196,9 @@ class FileOrganizerApp:
             fg=self.COLORS["blue"],
         )
 
-        icon.pack(
-            side="left",
-            padx=(0, 12),
-        )
+        icon.pack(side="left", padx=(0, 12))
 
-        text_frame = tk.Frame(
-            title_frame,
-            bg=self.COLORS["bg"],
-        )
+        text_frame = tk.Frame(title_frame, bg=self.COLORS["bg"])
 
         text_frame.pack(side="left")
 
@@ -252,10 +220,7 @@ class FileOrganizerApp:
             fg=self.COLORS["text_secondary"],
         )
 
-        subtitle.pack(
-            anchor="w",
-            pady=(2, 0),
-        )
+        subtitle.pack(anchor="w", pady=(2, 0))
 
         # ------------------------------------------------------------
         # RIGHT STATUS
@@ -268,11 +233,7 @@ class FileOrganizerApp:
             highlightthickness=1,
         )
 
-        status_container.pack(
-            side="right",
-            padx=(20, 0),
-            pady=5,
-        )
+        status_container.pack(side="right", padx=(20, 0), pady=5)
 
         self.connection_dot = tk.Label(
             status_container,
@@ -282,10 +243,7 @@ class FileOrganizerApp:
             fg=self.COLORS["green"],
         )
 
-        self.connection_dot.pack(
-            side="left",
-            padx=(10, 5),
-        )
+        self.connection_dot.pack(side="left", padx=(10, 5))
 
         self.header_status = tk.Label(
             status_container,
@@ -295,26 +253,16 @@ class FileOrganizerApp:
             fg=self.COLORS["text_secondary"],
         )
 
-        self.header_status.pack(
-            side="left",
-            padx=(0, 10),
-            pady=7,
-        )
+        self.header_status.pack(side="left", padx=(0, 10), pady=7)
 
     def update_header_status(self, busy=False):
         if busy:
-            self.header_status.config(
-                text="LOCAL • WORKING",
-                fg=self.COLORS["orange"],
-            )
+            self.header_status.config(text="LOCAL • WORKING", fg=self.COLORS["orange"])
 
             self.connection_dot.config(fg=self.COLORS["orange"])
 
         else:
-            self.header_status.config(
-                text="LOCAL • READY",
-                fg=self.COLORS["green"],
-            )
+            self.header_status.config(text="LOCAL • READY", fg=self.COLORS["green"])
 
             self.connection_dot.config(fg=self.COLORS["green"])
 
@@ -323,48 +271,23 @@ class FileOrganizerApp:
     # ================================================================
 
     def create_folder_card(self):
-        outer = tk.Frame(
-            self.root,
-            bg=self.COLORS["border"],
-        )
+        outer = tk.Frame(self.root, bg=self.COLORS["border"])
 
-        outer.pack(
-            fill="x",
-            padx=42,
-            pady=(0, 14),
-        )
+        outer.pack(fill="x", padx=42, pady=(0, 14))
 
-        card = tk.Frame(
-            outer,
-            bg=self.COLORS["panel"],
-        )
+        card = tk.Frame(outer, bg=self.COLORS["panel"])
 
-        card.pack(
-            fill="both",
-            expand=True,
-            padx=1,
-            pady=1,
-        )
+        card.pack(fill="both", expand=True, padx=1, pady=1)
 
-        content = tk.Frame(
-            card,
-            bg=self.COLORS["panel"],
-        )
+        content = tk.Frame(card, bg=self.COLORS["panel"])
 
-        content.pack(
-            fill="x",
-            padx=20,
-            pady=18,
-        )
+        content.pack(fill="x", padx=20, pady=18)
 
         # ------------------------------------------------------------
         # HEADER
         # ------------------------------------------------------------
 
-        heading_row = tk.Frame(
-            content,
-            bg=self.COLORS["panel"],
-        )
+        heading_row = tk.Frame(content, bg=self.COLORS["panel"])
 
         heading_row.pack(fill="x")
 
@@ -376,10 +299,7 @@ class FileOrganizerApp:
             fg=self.COLORS["blue"],
         )
 
-        folder_icon.pack(
-            side="left",
-            padx=(0, 8),
-        )
+        folder_icon.pack(side="left", padx=(0, 8))
 
         folder_title = tk.Label(
             heading_row,
@@ -405,26 +325,13 @@ class FileOrganizerApp:
         # PATH
         # ------------------------------------------------------------
 
-        path_frame = tk.Frame(
-            content,
-            bg=self.COLORS["panel"],
-        )
+        path_frame = tk.Frame(content, bg=self.COLORS["panel"])
 
-        path_frame.pack(
-            fill="x",
-            pady=(12, 0),
-        )
+        path_frame.pack(fill="x", pady=(12, 0))
 
-        entry_container = tk.Frame(
-            path_frame,
-            bg=self.COLORS["border_light"],
-        )
+        entry_container = tk.Frame(path_frame, bg=self.COLORS["border_light"])
 
-        entry_container.pack(
-            side="left",
-            fill="x",
-            expand=True,
-        )
+        entry_container.pack(side="left", fill="x", expand=True)
 
         self.folder_entry = tk.Entry(
             entry_container,
@@ -437,12 +344,7 @@ class FileOrganizerApp:
             insertbackground=self.COLORS["text"],
         )
 
-        self.folder_entry.pack(
-            fill="x",
-            padx=1,
-            pady=1,
-            ipady=8,
-        )
+        self.folder_entry.pack(fill="x", padx=1, pady=1, ipady=8)
 
         self.browse_button = tk.Button(
             path_frame,
@@ -458,33 +360,18 @@ class FileOrganizerApp:
             activeforeground=self.COLORS["white"],
         )
 
-        self.browse_button.pack(
-            side="left",
-            padx=(10, 0),
-            ipady=7,
-        )
+        self.browse_button.pack(side="left", padx=(10, 0), ipady=7)
 
-        self.add_hover_effect(
-            self.browse_button,
-            self.COLORS["blue"],
-            self.COLORS["blue_hover"],
-        )
+        self.add_hover_effect(self.browse_button, self.COLORS["blue"], self.COLORS["blue_hover"])
 
     # ================================================================
     # ACTION BAR
     # ================================================================
 
     def create_action_bar(self):
-        frame = tk.Frame(
-            self.root,
-            bg=self.COLORS["bg"],
-        )
+        frame = tk.Frame(self.root, bg=self.COLORS["bg"])
 
-        frame.pack(
-            fill="x",
-            padx=42,
-            pady=(0, 16),
-        )
+        frame.pack(fill="x", padx=42, pady=(0, 16))
 
         self.preview_button = self.create_button(
             frame,
@@ -495,10 +382,7 @@ class FileOrganizerApp:
             width=14,
         )
 
-        self.preview_button.pack(
-            side="left",
-            padx=(0, 7),
-        )
+        self.preview_button.pack(side="left", padx=(0, 7))
 
         self.organize_button = self.create_button(
             frame,
@@ -509,10 +393,7 @@ class FileOrganizerApp:
             width=16,
         )
 
-        self.organize_button.pack(
-            side="left",
-            padx=7,
-        )
+        self.organize_button.pack(side="left", padx=7)
 
         self.undo_button = self.create_button(
             frame,
@@ -523,10 +404,7 @@ class FileOrganizerApp:
             width=14,
         )
 
-        self.undo_button.pack(
-            side="left",
-            padx=7,
-        )
+        self.undo_button.pack(side="left", padx=7)
 
         self.clear_button = self.create_button(
             frame,
@@ -537,10 +415,7 @@ class FileOrganizerApp:
             width=14,
         )
 
-        self.clear_button.pack(
-            side="left",
-            padx=7,
-        )
+        self.clear_button.pack(side="left", padx=7)
 
         shortcut = tk.Label(
             frame,
@@ -550,24 +425,13 @@ class FileOrganizerApp:
             fg=self.COLORS["text_muted"],
         )
 
-        shortcut.pack(
-            side="right",
-            padx=(15, 0),
-        )
+        shortcut.pack(side="right", padx=(15, 0))
 
     # ================================================================
     # BUTTON FACTORY
     # ================================================================
 
-    def create_button(
-        self,
-        parent,
-        text,
-        command,
-        background,
-        hover_background,
-        width=14,
-    ):
+    def create_button(self, parent, text, command, background, hover_background, width=14):
         button = tk.Button(
             parent,
             text=text,
@@ -585,20 +449,11 @@ class FileOrganizerApp:
             disabledforeground=self.COLORS["text_muted"],
         )
 
-        self.add_hover_effect(
-            button,
-            background,
-            hover_background,
-        )
+        self.add_hover_effect(button, background, hover_background)
 
         return button
 
-    def add_hover_effect(
-        self,
-        widget,
-        normal_color,
-        hover_color,
-    ):
+    def add_hover_effect(self, widget, normal_color, hover_color):
         def on_enter(event):
             if str(widget["state"]) != "disabled":
                 widget.config(bg=hover_color)
@@ -607,31 +462,18 @@ class FileOrganizerApp:
             if str(widget["state"]) != "disabled":
                 widget.config(bg=normal_color)
 
-        widget.bind(
-            "<Enter>",
-            on_enter,
-        )
+        widget.bind("<Enter>", on_enter)
 
-        widget.bind(
-            "<Leave>",
-            on_leave,
-        )
+        widget.bind("<Leave>", on_leave)
 
     # ================================================================
     # RESULTS AREA
     # ================================================================
 
     def create_results_area(self):
-        heading = tk.Frame(
-            self.root,
-            bg=self.COLORS["bg"],
-        )
+        heading = tk.Frame(self.root, bg=self.COLORS["bg"])
 
-        heading.pack(
-            fill="x",
-            padx=42,
-            pady=(0, 7),
-        )
+        heading.pack(fill="x", padx=42, pady=(0, 7))
 
         result_title = tk.Label(
             heading,
@@ -653,29 +495,13 @@ class FileOrganizerApp:
 
         self.result_count_label.pack(side="right")
 
-        result_outer = tk.Frame(
-            self.root,
-            bg=self.COLORS["border"],
-        )
+        result_outer = tk.Frame(self.root, bg=self.COLORS["border"])
 
-        result_outer.pack(
-            fill="both",
-            expand=True,
-            padx=42,
-            pady=(0, 15),
-        )
+        result_outer.pack(fill="both", expand=True, padx=42, pady=(0, 15))
 
-        result_frame = tk.Frame(
-            result_outer,
-            bg=self.COLORS["panel"],
-        )
+        result_frame = tk.Frame(result_outer, bg=self.COLORS["panel"])
 
-        result_frame.pack(
-            fill="both",
-            expand=True,
-            padx=1,
-            pady=1,
-        )
+        result_frame.pack(fill="both", expand=True, padx=1, pady=1)
 
         scrollbar = tk.Scrollbar(
             result_frame,
@@ -687,10 +513,7 @@ class FileOrganizerApp:
             bd=0,
         )
 
-        scrollbar.pack(
-            side="right",
-            fill="y",
-        )
+        scrollbar.pack(side="right", fill="y")
 
         self.result_text = tk.Text(
             result_frame,
@@ -711,11 +534,7 @@ class FileOrganizerApp:
             yscrollcommand=scrollbar.set,
         )
 
-        self.result_text.pack(
-            side="left",
-            fill="both",
-            expand=True,
-        )
+        self.result_text.pack(side="left", fill="both", expand=True)
 
         scrollbar.config(command=self.result_text.yview)
 
@@ -726,39 +545,26 @@ class FileOrganizerApp:
         # ------------------------------------------------------------
 
         self.result_text.tag_configure(
-            "heading",
-            foreground=self.COLORS["text"],
-            font=("Consolas", 11, "bold"),
+            "heading", foreground=self.COLORS["text"], font=("Consolas", 11, "bold")
         )
 
         self.result_text.tag_configure(
-            "accent",
-            foreground=self.COLORS["blue"],
-            font=("Consolas", 10, "bold"),
+            "accent", foreground=self.COLORS["blue"], font=("Consolas", 10, "bold")
         )
 
         self.result_text.tag_configure(
-            "success",
-            foreground=self.COLORS["green"],
-            font=("Consolas", 10, "bold"),
+            "success", foreground=self.COLORS["green"], font=("Consolas", 10, "bold")
         )
 
-        self.result_text.tag_configure(
-            "muted",
-            foreground=self.COLORS["text_muted"],
-        )
+        self.result_text.tag_configure("muted", foreground=self.COLORS["text_muted"])
 
         self.result_text.tag_configure(
-            "category",
-            foreground=self.COLORS["orange"],
-            font=("Consolas", 10, "bold"),
+            "category", foreground=self.COLORS["orange"], font=("Consolas", 10, "bold")
         )
 
         for category, color in self.CATEGORY_COLORS.items():
             self.result_text.tag_configure(
-                f"category_{category.lower()}",
-                foreground=color,
-                font=("Consolas", 10, "bold"),
+                f"category_{category.lower()}", foreground=color, font=("Consolas", 10, "bold")
             )
 
     # ================================================================
@@ -766,16 +572,9 @@ class FileOrganizerApp:
     # ================================================================
 
     def create_status_bar(self):
-        status = tk.Frame(
-            self.root,
-            bg=self.COLORS["bg_secondary"],
-            height=32,
-        )
+        status = tk.Frame(self.root, bg=self.COLORS["bg_secondary"], height=32)
 
-        status.pack(
-            fill="x",
-            side="bottom",
-        )
+        status.pack(fill="x", side="bottom")
 
         status.pack_propagate(False)
 
@@ -787,10 +586,7 @@ class FileOrganizerApp:
             fg=self.COLORS["green"],
         )
 
-        self.status_dot.pack(
-            side="left",
-            padx=(42, 7),
-        )
+        self.status_dot.pack(side="left", padx=(42, 7))
 
         self.status_label = tk.Label(
             status,
@@ -811,35 +607,20 @@ class FileOrganizerApp:
             fg=self.COLORS["text_muted"],
         )
 
-        self.offline_label.pack(
-            side="right",
-            padx=42,
-        )
+        self.offline_label.pack(side="right", padx=42)
 
     # ================================================================
     # KEYBOARD SHORTCUTS
     # ================================================================
 
     def bind_shortcuts(self):
-        self.root.bind(
-            "<Control-o>",
-            self._shortcut_browse,
-        )
+        self.root.bind("<Control-o>", self._shortcut_browse)
 
-        self.root.bind(
-            "<Control-p>",
-            self._shortcut_preview,
-        )
+        self.root.bind("<Control-p>", self._shortcut_preview)
 
-        self.root.bind(
-            "<Control-z>",
-            self._shortcut_undo,
-        )
+        self.root.bind("<Control-z>", self._shortcut_undo)
 
-        self.root.bind(
-            "<Escape>",
-            self._shortcut_clear,
-        )
+        self.root.bind("<Escape>", self._shortcut_clear)
 
     def _shortcut_browse(self, event):
         self.select_folder()
@@ -1077,27 +858,17 @@ class FileOrganizerApp:
         return counts
 
     def create_category_summary(self, counts, total):
-        lines = [
-            "CATEGORY BREAKDOWN",
-            "────────────────────────────────────────",
-            "",
-        ]
+        lines = ["CATEGORY BREAKDOWN", "────────────────────────────────────────", ""]
 
         for category in self.CATEGORY_ORDER:
-            count = counts.get(
-                category,
-                0,
-            )
+            count = counts.get(category, 0)
 
             if count <= 0:
                 continue
 
             percentage = count / total * 100 if total else 0
 
-            icon = self.CATEGORY_ICONS.get(
-                category,
-                "•",
-            )
+            icon = self.CATEGORY_ICONS.get(category, "•")
 
             lines.append(f"{icon} {category:<12}{count:>5}   {percentage:>5.1f}%")
 
@@ -1107,146 +878,80 @@ class FileOrganizerApp:
     # BACKGROUND OPERATIONS
     # ================================================================
 
-    def run_background_operation(
-        self,
-        operation_name,
-        function,
-        *args,
-    ):
+    def run_background_operation(self, operation_name, function, *args):
         if self.is_busy:
             return
 
         self.operation_name = operation_name
+        self.operation_cancelled = False
 
-        self.set_busy(
-            True,
-            f"{operation_name}...",
-        )
+        self.set_busy(True, f"{operation_name}...")
 
         self.operation_thread = threading.Thread(
-            target=self._background_worker,
-            args=(
-                operation_name,
-                function,
-                args,
-            ),
-            daemon=True,
-            name=f"FileOrganizer-{operation_name}",
+            target=self._background_worker, args=(function, args), daemon=True
         )
 
         self.operation_thread.start()
 
-    def _background_worker(
-        self,
-        operation_name,
-        function,
-        args,
-    ):
+    def _background_worker(self, function, args):
         try:
             result = function(*args)
 
-            self.operation_queue.put(
-                (
-                    "success",
-                    operation_name,
-                    result,
-                )
-            )
+            self.operation_queue.put(("success", result))
 
         except Exception as error:
-            self.operation_queue.put(
-                (
-                    "error",
-                    operation_name,
-                    error,
-                )
-            )
+            self.operation_queue.put(("error", error))
 
     def process_operation_queue(self):
         try:
             while True:
-                result_type, operation_name, result = self.operation_queue.get_nowait()
+                result_type, result = self.operation_queue.get_nowait()
 
-                self.handle_operation_result(
-                    result_type,
-                    operation_name,
-                    result,
-                )
+                self.handle_operation_result(result_type, result)
 
         except queue.Empty:
             pass
 
         if self.root.winfo_exists():
-            self.root.after(
-                self.OPERATION_POLL_INTERVAL,
-                self.process_operation_queue,
-            )
+            self.root.after(100, self.process_operation_queue)
 
-    def handle_operation_result(
-        self,
-        result_type,
-        operation_name,
-        result,
-    ):
+    def handle_operation_result(self, result_type, result):
         if result_type == "success":
-            self.handle_operation_success(
-                operation_name,
-                result,
-            )
+            self.handle_operation_success(result)
 
         elif result_type == "error":
-            self.handle_operation_error(
-                operation_name,
-                result,
-            )
+            self.handle_operation_error(result)
 
-    def handle_operation_success(
-        self,
-        operation_name,
-        result,
-    ):
+    def handle_operation_success(self, result):
         self.set_busy(False)
 
-        if operation_name == "Preview":
+        if self.operation_name == "Preview":
             self.handle_preview_success(result)
 
-        elif operation_name == "Organization Preparation":
-            self.handle_organization_preparation_success(result)
-
-        elif operation_name == "Organization":
+        elif self.operation_name == "Organization":
             self.handle_organization_success(result)
 
-        elif operation_name == "Undo":
+        elif self.operation_name == "Undo":
             self.handle_undo_success(result)
 
         self.operation_name = None
         self.operation_thread = None
 
-    def handle_operation_error(
-        self,
-        operation_name,
-        error,
-    ):
-        operation = operation_name or "Operation"
+    def handle_operation_error(self, error):
+        operation = self.operation_name or "Operation"
 
         self.set_busy(False)
 
         self.operation_name = None
         self.operation_thread = None
 
-        if isinstance(
-            error,
-            PermissionError,
-        ):
+        if isinstance(error, PermissionError):
             messagebox.showerror(
                 "Permission Error",
                 (f"{operation} could not be completed because permission was denied.\n\n{error}"),
             )
 
-        elif isinstance(
-            error,
-            FileNotFoundError,
-        ):
+        elif isinstance(error, FileNotFoundError):
             messagebox.showerror(
                 "File Not Found",
                 (
@@ -1257,22 +962,14 @@ class FileOrganizerApp:
                 ),
             )
 
-        elif isinstance(
-            error,
-            NotADirectoryError,
-        ):
+        elif isinstance(error, NotADirectoryError):
             messagebox.showerror(
-                "Folder Error",
-                (f"The selected path is no longer a valid folder.\n\n{error}"),
+                "Folder Error", (f"The selected path is no longer a valid folder.\n\n{error}")
             )
 
-        elif isinstance(
-            error,
-            OSError,
-        ):
+        elif isinstance(error, OSError):
             messagebox.showerror(
-                "File System Error",
-                (f"{operation} could not be completed.\n\n{error}"),
+                "File System Error", (f"{operation} could not be completed.\n\n{error}")
             )
 
         else:
@@ -1302,10 +999,7 @@ class FileOrganizerApp:
 
         preview = self.create_preview(files)
 
-        self.show_result(
-            preview,
-            len(files),
-        )
+        self.show_result(preview, len(files))
 
         self.set_status(f"Preview ready • {len(files):,} file(s) detected")
 
@@ -1324,29 +1018,14 @@ class FileOrganizerApp:
             "",
         ]
 
-        lines.extend(
-            self.create_category_summary(
-                counts,
-                len(files),
-            )
-        )
+        lines.extend(self.create_category_summary(counts, len(files)))
 
-        lines.extend(
-            [
-                "",
-                "FILES TO BE ORGANIZED",
-                "────────────────────────────────────────",
-                "",
-            ]
-        )
+        lines.extend(["", "FILES TO BE ORGANIZED", "────────────────────────────────────────", ""])
 
         for file_path in files:
             category = get_category(file_path)
 
-            icon = self.CATEGORY_ICONS.get(
-                category,
-                "•",
-            )
+            icon = self.CATEGORY_ICONS.get(category, "•")
 
             lines.append(f"{icon} {self.format_filename(file_path.name)}")
 
@@ -1361,125 +1040,19 @@ class FileOrganizerApp:
             return
 
         if not self.selected_folder:
-            messagebox.showwarning(
-                "No Folder Selected",
-                "Please select a folder first.",
-            )
+            messagebox.showwarning("No Folder Selected", "Please select a folder first.")
             return
 
         if not self.validate_selected_folder():
             return
 
-        self.run_background_operation(
-            "Preview",
-            get_files,
-            self.selected_folder,
-        )
-
-    # ================================================================
-    # ORGANIZATION PREPARATION
-    # ================================================================
-
-    def organize_files(self):
-        if self.is_busy:
-            return
-
-        if not self.selected_folder:
-            messagebox.showwarning(
-                "No Folder Selected",
-                "Please select a folder first.",
-            )
-            return
-
-        if not self.validate_selected_folder():
-            return
-
-        self.run_background_operation(
-            "Organization Preparation",
-            self._prepare_organization,
-            self.selected_folder,
-        )
-
-    def _prepare_organization(self, folder):
-        files = get_files(folder)
-
-        if not files:
-            return {
-                "status": "empty",
-                "files": [],
-                "counts": Counter(),
-            }
-
-        counts = self.get_category_counts(files)
-
-        return {
-            "status": "ready",
-            "files": files,
-            "counts": counts,
-        }
-
-    def handle_organization_preparation_success(
-        self,
-        result,
-    ):
-        if result["status"] == "empty":
-            self.last_operation = None
-
-            self.show_message(
-                "NOTHING TO ORGANIZE\n\n"
-                "No regular files were found directly "
-                "inside the selected folder."
-            )
-
-            self.set_status("No files were found to organize.")
-
-            self.update_button_states()
-
-            return
-
-        files = result["files"]
-        counts = result["counts"]
-
-        summary_lines = self.create_category_summary(
-            counts,
-            len(files),
-        )
-
-        confirmation_text = (
-            f"Organize {len(files):,} file(s) in this folder?\n\n"
-            "Files will be moved into these categories:\n\n" + "\n".join(summary_lines[3:]) + "\n\n"
-            "Existing destination files will not be overwritten.\n"
-            "Duplicate filenames will receive a safe suffix.\n\n"
-            "Files will be moved immediately after confirmation.\n\n"
-            "Continue?"
-        )
-
-        confirmation = messagebox.askyesno(
-            "Confirm Organization",
-            confirmation_text,
-        )
-
-        if not confirmation:
-            self.set_status("Organization cancelled.")
-            return
-
-        if not self.validate_selected_folder():
-            return
-
-        self.run_background_operation(
-            "Organization",
-            organize_folder,
-            self.selected_folder,
-        )
+        self.run_background_operation("Preview", get_files, self.selected_folder)
 
     # ================================================================
     # ORGANIZATION SUCCESS
     # ================================================================
 
-    def handle_organization_success(
-        self,
-        moved_files,
-    ):
+    def handle_organization_success(self, moved_files):
         if not moved_files:
             self.last_operation = None
 
@@ -1495,10 +1068,7 @@ class FileOrganizerApp:
 
         summary = self.create_organization_summary(moved_files)
 
-        self.show_result(
-            summary,
-            len(moved_files),
-        )
+        self.show_result(summary, len(moved_files))
 
         self.set_status(f"Organization complete • {len(moved_files):,} file(s) moved")
 
@@ -1518,10 +1088,7 @@ class FileOrganizerApp:
     # ORGANIZATION SUMMARY
     # ================================================================
 
-    def create_organization_summary(
-        self,
-        moved_files,
-    ):
+    def create_organization_summary(self, moved_files):
         counts = Counter(item["category"] for item in moved_files)
 
         lines = [
@@ -1532,29 +1099,14 @@ class FileOrganizerApp:
             "",
         ]
 
-        lines.extend(
-            self.create_category_summary(
-                counts,
-                len(moved_files),
-            )
-        )
+        lines.extend(self.create_category_summary(counts, len(moved_files)))
 
-        lines.extend(
-            [
-                "",
-                "FILES ORGANIZED",
-                "────────────────────────────────────────",
-                "",
-            ]
-        )
+        lines.extend(["", "FILES ORGANIZED", "────────────────────────────────────────", ""])
 
         for item in moved_files:
             category = item["category"]
 
-            icon = self.CATEGORY_ICONS.get(
-                category,
-                "•",
-            )
+            icon = self.CATEGORY_ICONS.get(category, "•")
 
             source = item.get("source")
             destination = item.get("destination")
@@ -1571,6 +1123,76 @@ class FileOrganizerApp:
             lines.append("")
 
         return "\n".join(lines)
+
+    # ================================================================
+    # ORGANIZE
+    # ================================================================
+
+    def organize_files(self):
+        if self.is_busy:
+            return
+
+        if not self.selected_folder:
+            messagebox.showwarning("No Folder Selected", "Please select a folder first.")
+            return
+
+        if not self.validate_selected_folder():
+            return
+
+        try:
+            files = get_files(self.selected_folder)
+
+        except FileNotFoundError as error:
+            messagebox.showerror("Folder Error", f"Could not find the selected folder.\n\n{error}")
+            return
+
+        except NotADirectoryError as error:
+            messagebox.showerror("Folder Error", f"The selected path is not a folder.\n\n{error}")
+            return
+
+        except PermissionError as error:
+            messagebox.showerror(
+                "Permission Error",
+                (f"The application does not have permission to read this folder.\n\n{error}"),
+            )
+            return
+
+        except OSError as error:
+            messagebox.showerror(
+                "Folder Error", (f"Could not read the selected folder.\n\n{error}")
+            )
+            return
+
+        if not files:
+            self.show_message(
+                "NOTHING TO ORGANIZE\n\n"
+                "No regular files were found directly "
+                "inside the selected folder."
+            )
+
+            self.set_status("No files were found to organize.")
+
+            return
+
+        counts = self.get_category_counts(files)
+
+        summary_lines = self.create_category_summary(counts, len(files))
+
+        confirmation_text = (
+            f"Organize {len(files)} file(s) in this folder?\n\n"
+            "Files will be moved into these categories:\n\n" + "\n".join(summary_lines[3:]) + "\n\n"
+            "Existing destination files will not be overwritten.\n"
+            "Duplicate filenames will receive a safe suffix.\n\n"
+            "Files will be moved immediately after confirmation.\n\n"
+            "Continue?"
+        )
+
+        confirmation = messagebox.askyesno("Confirm Organization", confirmation_text)
+
+        if not confirmation:
+            return
+
+        self.run_background_operation("Organization", organize_folder, self.selected_folder)
 
     # ================================================================
     # UNDO SUMMARY
